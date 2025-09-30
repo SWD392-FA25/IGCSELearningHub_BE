@@ -1,4 +1,7 @@
-﻿using AutoMapper;
+﻿using Application.ViewModels.Accounts;
+using Application.ViewModels.Authentication;
+using AutoMapper;
+using Domain.Entities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +14,16 @@ namespace Infrastructure.MapperConfigs
     {
         public MapperConfig()
         {
+            MappingAccount();
+        }
 
+        public void MappingAccount()
+        {
+            CreateMap<AccountRegistrationDTO, Account>()
+                    .ForMember(dest => dest.Password, opt => opt.Ignore())
+                    .ForMember(dest => dest.Status, opt => opt.MapFrom(src => "Active"))
+                    .ForMember(dest => dest.ExternalProvider, opt => opt.Condition(src => src.IsExternal));
+            CreateMap<Account, AccountDTO>();
         }
     }
 }

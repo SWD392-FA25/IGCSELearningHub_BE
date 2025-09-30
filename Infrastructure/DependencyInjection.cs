@@ -1,5 +1,9 @@
 ﻿using Application;
+using Application.Authentication;
+using Application.Authentication.Interfaces;
 using Application.IRepository;
+using Application.Utils;
+using Application.Utils.Interfaces;
 using Infrastructure.Data;
 using Infrastructure.Repository;
 using Microsoft.EntityFrameworkCore;
@@ -44,7 +48,9 @@ namespace Infrastructure
             #endregion
 
             #region service config
-
+            services.AddScoped<IAuthenticationService, AuthenticationService>();
+            services.AddScoped<IJwtTokenService, JwtTokenService>();
+            services.AddScoped<IDateTimeProvider, DateTimeProvider>();
             #endregion
 
             #region quartz config

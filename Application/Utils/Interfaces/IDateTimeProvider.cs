@@ -4,13 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Domain.Enums
+namespace Application.Utils.Interfaces
 {
-    public enum AccountRole
+    public interface IDateTimeProvider
     {
-        Student,
-        Teacher,
-        Administrator,
-        Moderator
+        DateTime UtcNow { get; }
     }
 }

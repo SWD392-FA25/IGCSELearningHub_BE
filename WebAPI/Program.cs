@@ -1,10 +1,16 @@
 
+using Asp.Versioning;
+using Asp.Versioning.ApiExplorer;
 using Infrastructure;
-using Infrastructure.Data;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using System;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
+using Serilog;
+using System.Reflection;
+using System.Text;
 using System.Text.Json.Serialization;
+using WebAPI.Configuration;
+using WebAPI.Middlewares;
 
 namespace WebAPI
 {
@@ -12,42 +18,161 @@ namespace WebAPI
     {
         public static void Main(string[] args)
         {
-            var builder = WebApplication.CreateBuilder(args);
+            Log.Logger = new LoggerConfiguration()
+                        .WriteTo.Console()
+                        .WriteTo.File("Logs/logBootstrap-.txt", rollingInterval: RollingInterval.Day)
+                        .CreateBootstrapLogger();
 
-            builder.Services.AddCors(options =>
+            try
             {
-                options.AddPolicy("AllowAll",
-                    policy => policy.AllowAnyOrigin()
-                                    .AllowAnyMethod()
-                                    .AllowAnyHeader());
-            });
+                Log.Information("Starting up the application...");
 
-            builder.Configuration.AddEnvironmentVariables();
+                var builder = WebApplication.CreateBuilder(args);
 
-            builder.Services.AddControllers().AddJsonOptions(options => options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
+                builder.Host.UseSerilog((ctx, services, config) =>
+                config.ReadFrom.Configuration(ctx.Configuration)
+                      .ReadFrom.Services(services));
 
-            builder.Services.AddInfrastructureServicesAsync(builder.Configuration);
+                builder.Services.AddCors(options =>
+                {
+                    options.AddPolicy("AllowAll",
+                        policy => policy.AllowAnyOrigin()
+                                        .AllowAnyMethod()
+                                        .AllowAnyHeader());
+                });
 
-            builder.Services.AddEndpointsApiExplorer();
-            builder.Services.AddSwaggerGen();
+                builder.Configuration.AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+                                    .AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", optional: true)
+                                    .AddEnvironmentVariables();
 
-            var app = builder.Build();
+                if (builder.Environment.IsDevelopment())
+                {
+                    builder.Configuration.AddUserSecrets<Program>(optional: true);
+                }
 
-            // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
-            {
-                app.UseSwagger();
-                app.UseSwaggerUI();
+                builder.Services.AddOptions<JwtOptions>()
+                        .Bind(builder.Configuration.GetSection("Authentication:Jwt"))
+                        .Validate(o => !string.IsNullOrWhiteSpace(o.Secret), "JWT Secret is required.")
+                        .ValidateOnStart();
+
+                var jwt = builder.Configuration.GetSection("Authentication:Jwt").Get<JwtOptions>()!;
+                var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Secret));
+
+                builder.Services.AddAuthentication(options =>
+                {
+                    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                })
+                .AddJwtBearer(options =>
+                {
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = key,
+                        ValidateIssuer = !string.IsNullOrWhiteSpace(jwt.Issuer),
+                        ValidateAudience = !string.IsNullOrWhiteSpace(jwt.Audience),
+                        ValidIssuer = jwt.Issuer,
+                        ValidAudience = jwt.Audience,
+                        RequireExpirationTime = true,
+                        ValidateLifetime = true,
+                        ClockSkew = TimeSpan.Zero
+                    };
+                });
+
+                builder.Services.AddControllers().AddJsonOptions(options => options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles);
+
+                builder.Services.AddApiVersioning(options =>
+                {
+                    options.DefaultApiVersion = new ApiVersion(1, 0);
+                    options.AssumeDefaultVersionWhenUnspecified = true;
+                    options.ReportApiVersions = true;
+                    options.ApiVersionReader = new UrlSegmentApiVersionReader();
+                }).AddMvc().AddApiExplorer(options =>
+                {
+                    options.GroupNameFormat = "'v'VVV";
+                    options.SubstituteApiVersionInUrl = true;
+                });
+
+                builder.Services.AddInfrastructureServicesAsync(builder.Configuration);
+
+                builder.Services.AddEndpointsApiExplorer();
+                builder.Services.AddSwaggerGen(c =>
+                {
+                    var securityScheme = new OpenApiSecurityScheme
+                    {
+                        Name = "Authorization",
+                        Description = "Enter JWT Bearer token **_only_**",
+                        In = ParameterLocation.Header,
+                        Type = SecuritySchemeType.Http,
+                        Scheme = "bearer",
+                        BearerFormat = "JWT",
+                        Reference = new OpenApiReference
+                        {
+                            Id = JwtBearerDefaults.AuthenticationScheme,
+                            Type = ReferenceType.SecurityScheme
+                        }
+                    };
+
+                    c.AddSecurityDefinition(securityScheme.Reference.Id, securityScheme);
+
+                    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+                    {
+                        { securityScheme, new string[] { } }
+                    });
+
+                    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                    if (File.Exists(xmlPath))
+                    {
+                        c.IncludeXmlComments(xmlPath);
+                    }
+                });
+
+                builder.Services.ConfigureOptions<ConfigureSwaggerOptions>();
+
+                var app = builder.Build();
+
+                // Configure the HTTP request pipeline.
+                if (app.Environment.IsDevelopment())
+                {
+                    var provider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
+                    app.UseSwagger();
+                    app.UseSwaggerUI(options =>
+                    {
+                        foreach (var description in provider.ApiVersionDescriptions)
+                        {
+                            options.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json",
+                                $"IGCSELearningHubApp API {description.GroupName.ToUpperInvariant()}");
+                        }
+                    });
+                }
+
+                app.UseHttpsRedirection();
+
+                app.UseMiddleware<CorrelationIdMiddleware>();
+
+                app.UseMiddleware<RequestResponseLoggingMiddleware>();
+
+                app.UseMiddleware<GlobalExceptionMiddleware>();
+
+                app.UseCors("AllowAll");
+
+                app.UseAuthentication();
+
+                app.UseAuthorization();
+
+                app.MapControllers();
+
+                app.Run();
             }
-
-            app.UseHttpsRedirection();
-
-            app.UseAuthorization();
-
-
-            app.MapControllers();
-
-            app.Run();
+            catch (Exception ex)
+            {
+                Log.Fatal(ex, "Application failed to start");
+            }
+            finally
+            {
+                Log.CloseAndFlush();
+            }
         }
     }
 }
