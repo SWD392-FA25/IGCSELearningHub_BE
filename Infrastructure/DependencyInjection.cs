@@ -2,6 +2,8 @@
 using Application.Authentication;
 using Application.Authentication.Interfaces;
 using Application.IRepository;
+using Application.Services;
+using Application.Services.Interfaces;
 using Application.Utils;
 using Application.Utils.Interfaces;
 using Infrastructure.Data;
@@ -9,11 +11,6 @@ using Infrastructure.Repository;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Infrastructure
 {
@@ -51,6 +48,7 @@ namespace Infrastructure
             services.AddScoped<IAuthenticationService, AuthenticationService>();
             services.AddScoped<IJwtTokenService, JwtTokenService>();
             services.AddScoped<IDateTimeProvider, DateTimeProvider>();
+            services.AddScoped<IAccountService, AccountService>();
             #endregion
 
             #region quartz config
