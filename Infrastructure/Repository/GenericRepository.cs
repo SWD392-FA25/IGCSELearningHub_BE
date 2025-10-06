@@ -1,10 +1,8 @@
 ﻿using Application.IRepository;
-using Domain;
 using Domain.Common;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
-using System.Net;
 
 namespace Infrastructure.Repository
 {
@@ -22,22 +20,14 @@ namespace Infrastructure.Repository
             await _dbSet.AddAsync(model);
         }
 
-        public void Delete(TModel model)
+        public void HardDelete(TModel model)
         {
             _dbSet.Remove(model);
         }
 
         public async Task<IEnumerable<TModel>> GetAllAsync()
         {
-            var result = _dbSet;
-            foreach (var item in result)
-            {
-                if (item.IsDeleted)
-                {
-                    result.Remove(item);
-                }
-            }
-            return await result.ToListAsync();
+            return await _dbSet.Where(e => e.IsDeleted).ToListAsync();
         }
 
         public async Task<TModel> GetByIdAsync(int id)
