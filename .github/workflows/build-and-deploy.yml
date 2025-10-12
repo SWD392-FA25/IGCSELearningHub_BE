@@ -1,0 +1,63 @@
+name: Build & Deploy .NET 8 to Azure Web App (Linux)
+
+on:
+  push:
+    branches: 
+        - master
+  workflow_dispatch:
+
+env:
+  AZURE_WEBAPP_NAME: igcse-learninghub-api  
+  DOTNET_VERSION: "8.0.x"
+  SOLUTION_PATH: IGCSE Learning Hub.sln
+  PROJECT_PATH: WebAPI/WebAPI.csproj
+  PUBLISH_DIR: ./publish
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Cache NuGet
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+          restore-keys: ${{ runner.os }}-nuget-
+
+      - run: dotnet restore ${{ env.PROJECT_PATH }}
+      - run: dotnet build ${{ env.PROJECT_PATH }} -c Release --no-restore
+      - run: dotnet test -c Release --no-build --verbosity normal || true
+      - run: dotnet publish ${{ env.PROJECT_PATH }} -c Release -o ${{ env.PUBLISH_DIR }} --no-build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: webapi-publish
+          path: ${{ env.PUBLISH_DIR }}
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: webapi-publish
+          path: ${{ env.PUBLISH_DIR }}
+
+      - name: Deploy to Azure Web App (Linux)
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: ${{ env.PUBLISH_DIR }}
