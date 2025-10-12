@@ -1,4 +1,3 @@
-
 using Asp.Versioning;
 using Asp.Versioning.ApiExplorer;
 using Infrastructure;
@@ -132,19 +131,20 @@ namespace WebAPI
 
                 var app = builder.Build();
 
+                app.UseSwagger();
+                app.UseSwaggerUI(options =>
+                {
+                    var provider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
+                    foreach (var description in provider.ApiVersionDescriptions)
+                    {
+                        options.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json",
+                            $"IGCSELearningHubApp API {description.GroupName.ToUpperInvariant()}");
+                    }
+                });
+
                 // Configure the HTTP request pipeline.
                 if (app.Environment.IsDevelopment())
                 {
-                    var provider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
-                    app.UseSwagger();
-                    app.UseSwaggerUI(options =>
-                    {
-                        foreach (var description in provider.ApiVersionDescriptions)
-                        {
-                            options.SwaggerEndpoint($"/swagger/{description.GroupName}/swagger.json",
-                                $"IGCSELearningHubApp API {description.GroupName.ToUpperInvariant()}");
-                        }
-                    });
                 }
 
                 app.UseHttpsRedirection();
