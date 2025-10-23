@@ -21,9 +21,9 @@ namespace WebAPI.Controllers
             _accountService = accountService;
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("{id:int}")]
         [AllowAnonymous]
-        public async Task<IActionResult> GetById(int id)
+        public async Task<IActionResult> GetById([FromRoute] int id)
         {
             var result = await _accountService.GetAccountByIdAsync(id);
             return StatusCode(result.StatusCode, result);
@@ -39,9 +39,15 @@ namespace WebAPI.Controllers
 
         [HttpGet("paged")]
         [AllowAnonymous]
-        public async Task<IActionResult> GetAllPaginated([FromQuery] QueryParameters query)
+        public async Task<IActionResult> GetPaged(
+            [FromQuery] string? q,
+            [FromQuery] string? role,
+            [FromQuery] string? status,
+            [FromQuery] string? sort,
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 20)
         {
-            var result = await _accountService.GetAllAccountsPaginatedAsync(query);
+            var result = await _accountService.GetAccountsPagedAsync(q, role, status, pageNumber, pageSize, sort);
             return StatusCode(result.StatusCode, result);
         }
 
@@ -49,7 +55,7 @@ namespace WebAPI.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> CheckUsernameOrEmailExists([FromQuery] string username, [FromQuery] string email)
         {
-            var result = await _accountService.CheckUsernameOrEmailExistsAsync(email, username);
+            var result = await _accountService.CheckUsernameOrEmailExistsAsync(username, email);
             return StatusCode(result.StatusCode, result);
         }
 

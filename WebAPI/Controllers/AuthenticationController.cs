@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Application.Authentication.Interfaces;
-using Application.ViewModels.Authentication;
+﻿using Application.Authentication.Interfaces;
 using Application.Exceptions;
+using Application.ViewModels.Authentication;
 using Asp.Versioning;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 
 namespace WebAPI.Controllers
@@ -22,6 +23,7 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost("register")]
+        [AllowAnonymous]
         public async Task<IActionResult> Register(AccountRegistrationDTO registrationDto)
         {
 
@@ -39,6 +41,7 @@ namespace WebAPI.Controllers
         }
 
         [HttpPost("login")]
+        [AllowAnonymous]
         public async Task<IActionResult> Login(AccountLoginDTO loginDto)
         {
 

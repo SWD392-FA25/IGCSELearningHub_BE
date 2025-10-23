@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace Application.ViewModels
 {
-    public class QueryParameters
+    public class PaginationFilter
     {
         private const int MaxPageSize = PaginationDefaults.MaxPageSize;
         private int _pageSize = PaginationDefaults.DefaultPageSize;
@@ -15,7 +15,7 @@ namespace Application.ViewModels
         public int PageSize
         {
             get => _pageSize;
-            set => _pageSize = value > MaxPageSize ? MaxPageSize : value;
+            set => _pageSize = (value > MaxPageSize) ? MaxPageSize : value;
         }
     }
 }

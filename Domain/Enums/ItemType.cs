@@ -9,7 +9,7 @@ namespace Domain.Enums
     public enum ItemType
     {
         Course,
-        Package,
+        CoursePackage,
         Livestream
     }
 }

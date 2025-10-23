@@ -35,7 +35,6 @@ namespace Application.Authentication
                 return Result<AuthenticatedUserDTO>.Fail("Invalid registration data.");
             }
 
-            // Check if account already exists (by Email or Username)
             var accountExists = await _unitOfWork.AccountRepository.GetByUsernameOrEmail(registrationDto.Email, registrationDto.UserName);
 
             if (accountExists != null)
@@ -45,41 +44,47 @@ namespace Application.Authentication
             }
 
             using (var transaction = await _unitOfWork.BeginTransactionAsync())
-            {
-                var account = _mapper.Map<Account>(registrationDto);
-                account.Password = BCrypt.Net.BCrypt.HashPassword(registrationDto.Password, workFactor: 12);
-
-                await _unitOfWork.AccountRepository.AddAsync(account);
-                await _unitOfWork.SaveChangesAsync();
-
-                var tokenResult = _jwtTokenService.GenerateJwtToken(
-                    account.Id,
-                    account.UserName,
-                    account.Role,
-                    account.Status
-                );
-
-                if (!tokenResult.Succeeded)
+                try
                 {
-                    return Result<AuthenticatedUserDTO>.Fail(tokenResult.Message ?? "Failed to generate token.");
+                    var account = _mapper.Map<Account>(registrationDto);
+                    account.Password = BCrypt.Net.BCrypt.HashPassword(registrationDto.Password, workFactor: 12);
+
+                    await _unitOfWork.AccountRepository.AddAsync(account);
+                    await _unitOfWork.SaveChangesAsync();
+
+                    var tokenResult = _jwtTokenService.GenerateJwtToken(
+                        account.Id,
+                        account.UserName,
+                        account.Role,
+                        account.Status
+                    );
+
+                    if (!tokenResult.Succeeded)
+                    {
+                        return Result<AuthenticatedUserDTO>.Fail(tokenResult.Message ?? "Failed to generate token.");
+                    }
+
+                    await transaction.CommitAsync();
+
+                    var response = new AuthenticatedUserDTO
+                    {
+                        JWTToken = tokenResult.Data!,
+                        Id = account.Id,
+                        UserName = account.UserName,
+                        FullName = account.FullName,
+                        Email = account.Email,
+                        Role = account.Role.ToString(),
+                        Status = account.Status,
+                        IsExternal = account.IsExternal
+                    };
+
+                    return Result<AuthenticatedUserDTO>.Success(response);
                 }
-
-                await transaction.CommitAsync();
-
-                var response = new AuthenticatedUserDTO
+                catch (Exception)
                 {
-                    JWTToken = tokenResult.Data!,
-                    Id = account.Id,
-                    UserName = account.UserName,
-                    FullName = account.FullName,
-                    Email = account.Email,
-                    Role = account.Role.ToString(),
-                    Status = account.Status,
-                    IsExternal = account.IsExternal
-                };
-
-                return Result<AuthenticatedUserDTO>.Success(response);
-            }
+                    await transaction.RollbackAsync();
+                    return Result<AuthenticatedUserDTO>.Fail("Email or username already in use.", 409);
+                }
         }
 
         public async Task<Result<AuthenticatedUserDTO>> LoginAsync(AccountLoginDTO loginDto)

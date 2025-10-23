@@ -27,7 +27,7 @@ namespace Infrastructure.Repository
 
         public async Task<IEnumerable<TModel>> GetAllAsync()
         {
-            return await _dbSet.Where(e => e.IsDeleted).ToListAsync();
+            return await _dbSet.Where(e => !e.IsDeleted).ToListAsync();
         }
 
         public async Task<TModel> GetByIdAsync(int id)

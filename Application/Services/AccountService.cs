@@ -4,6 +4,7 @@ using Application.ViewModels.Accounts;
 using Application.Wrappers;
 using AutoMapper;
 using Domain.Entities;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace Application.Services
@@ -38,22 +39,62 @@ namespace Application.Services
             return Result<IEnumerable<AccountDTO>>.Success(_mapper.Map<IEnumerable<AccountDTO>>(allAccounts), "All accounts retrieved successfully.");
         }
 
-        public async Task<Result<PaginatedList<AccountDTO>>> GetAllAccountsPaginatedAsync(QueryParameters queryParameters)
+        public async Task<PagedResult<AccountDTO>> GetAccountsPagedAsync(string? q, string? role, string? status, int page, int pageSize, string? sort)
         {
-            var query = _unitOfWork.AccountRepository.GetAllQueryable();
-            var pagedResult = await PaginatedList<Account>.CreateAsync(query, queryParameters.PageNumber, queryParameters.PageSize);
-            var accountDtoList = _mapper.Map<List<AccountDTO>>(pagedResult.Items);
+            page = page < 1 ? 1 : page;
+            pageSize = pageSize is <= 0 or > 100 ? 20 : pageSize;
 
-            return Result<PaginatedList<AccountDTO>>.Success(
-                new PaginatedList<AccountDTO>(accountDtoList, pagedResult.TotalCount, pagedResult.PageIndex, queryParameters.PageSize),
-                $"Accounts retrieved successfully. Page {pagedResult.PageIndex} of {pagedResult.TotalPages}."
-            );
+            var query = _unitOfWork.AccountRepository.GetAllQueryable();
+
+            if (!string.IsNullOrWhiteSpace(q))
+            {
+                var key = q.Trim().ToLower();
+                query = query.Where(a =>
+                    a.UserName.ToLower().Contains(key) ||
+                    a.Email.ToLower().Contains(key) ||
+                    (a.FullName != null && a.FullName.ToLower().Contains(key)));
+            }
+
+            if (!string.IsNullOrWhiteSpace(role))
+            {
+                var r = role.Trim();
+                query = query.Where(a => a.Role.ToString() == r);
+            }
+
+            if (!string.IsNullOrWhiteSpace(status))
+            {
+                var s = status.Trim().ToLower();
+                query = query.Where(a => (a.Status ?? "").ToLower() == s);
+            }
+
+            // sort: createdAt_desc (default) | createdAt_asc | name_asc|name_desc | email_asc|email_desc
+            query = (sort ?? "").ToLower() switch
+            {
+                "createdat_asc" => query.OrderBy(a => a.CreatedAt),
+                "name_asc" => query.OrderBy(a => a.UserName),
+                "name_desc" => query.OrderByDescending(a => a.UserName),
+                "email_asc" => query.OrderBy(a => a.Email),
+                "email_desc" => query.OrderByDescending(a => a.Email),
+                _ => query.OrderByDescending(a => a.CreatedAt)
+            };
+
+            var total = await query.CountAsync();
+
+            var data = await query
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .Select(a => _mapper.Map<AccountDTO>(a))
+                .ToListAsync();
+
+            return PagedResult<AccountDTO>.Success(data, total, page, pageSize);
         }
 
-        public async Task<Result<bool>> CheckUsernameOrEmailExistsAsync(string email, string username)
+        public async Task<Result<bool>> CheckUsernameOrEmailExistsAsync(string username, string email)
         {
+            // sửa lại thứ tự đúng (username, email)
             var existedAccount = await _unitOfWork.AccountRepository.GetByUsernameOrEmail(email, username);
-            return Result<bool>.Success(existedAccount != null, existedAccount != null ? "Username or Email already exists." : "Username or Email does not exist.");
+            return Result<bool>.Success(existedAccount != null,
+                existedAccount != null ? "Username or Email already exists." : "Username or Email does not exist.");
         }
 
         public async Task<Result<AccountDTO>> UpdateAccountAsync(int accountId, UpdateAccountDTO updateDto)
