@@ -12,12 +12,12 @@ namespace WebAPI.Controllers
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/me/assignments")]
     [Authorize(Roles = "Student,Admin,Teacher")]
-    public class MeAssignmentsController : ControllerBase
+    public class MyAssignmentsController : ControllerBase
     {
         private readonly IStudentSubmissionService _svc;
         private int CurrentUserId => int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
-        public MeAssignmentsController(IStudentSubmissionService svc) => _svc = svc;
+        public MyAssignmentsController(IStudentSubmissionService svc) => _svc = svc;
 
         [HttpPost("{assignmentId:int}/submissions")]
         public async Task<IActionResult> Submit([FromRoute] int assignmentId, [FromBody] CreateSubmissionRequest req)

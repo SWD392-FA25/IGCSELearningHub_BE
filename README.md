@@ -32,7 +32,7 @@ dotnet user-secrets set "Authentication:Jwt:Audience" "IGCSELearningHubUsers"
 dotnet user-secrets set "Vnpay:vnp_TmnCode" "<tmn>"
 dotnet user-secrets set "Vnpay:vnp_HashSecret" "<hash>"
 dotnet user-secrets set "Vnpay:vnp_BaseUrl" "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
-dotnet user-secrets set "Vnpay:vnp_ReturnUrl" "https://localhost:5001/api/v1/VnPay/callback"
+dotnet user-secrets set "Vnpay:vnp_ReturnUrl" "https://localhost:5001/api/v1/vnpay/callback"
 ```
 
 ## Database

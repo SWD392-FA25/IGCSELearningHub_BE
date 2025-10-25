@@ -101,7 +101,7 @@ namespace Application.Services
                 AccountId = dto.AccountId,
                 CourseId = dto.CourseId,
                 EnrollmentDate = _clock.UtcNow,
-                Status = dto.Status ?? EnrollmentStatus.Active
+                Status = dto.Status
             };
 
             await _uow.EnrollmentRepository.AddAsync(e);
@@ -109,11 +109,11 @@ namespace Application.Services
             return Result<int>.Success(e.Id, "Created", 201);
         }
 
-        public async Task<Result<bool>> UpdateStatusAsync(int enrollmentId, EnrollmentStatus status)
+        public async Task<Result<bool>> UpdateStatusAsync(int enrollmentId, EnrollmentUpdateStatusDTO dto)
         {
             var e = await _uow.EnrollmentRepository.GetByIdAsync(enrollmentId);
             if (e == null) return Result<bool>.Fail("Not found", 404);
-            e.Status = status;
+            e.Status = dto.Status;
             _uow.EnrollmentRepository.Update(e);
             await _uow.SaveChangesAsync();
             return Result<bool>.Success(true, "Updated", 200);

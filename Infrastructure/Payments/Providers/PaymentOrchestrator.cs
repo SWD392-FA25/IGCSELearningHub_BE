@@ -7,6 +7,7 @@ using Domain.Enums;
 using Infrastructure.Payments.Providers.VnPay;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Payments.Providers
 {
@@ -86,11 +87,45 @@ namespace Infrastructure.Payments.Providers
                 return result;
             }
 
-            var payment = (await _uow.PaymentRepository.GetAllAsync())
+            // Idempotency: if this order already paid, do not create/update more payments
+            var alreadyPaid = await _uow.PaymentRepository
+                .GetAllQueryable()
+                .AnyAsync(p => p.OrderId == order.Id && p.Status == PaymentStatus.Paid, ct)
+                || order.Status == OrderStatus.Paid;
+
+            if (alreadyPaid)
+            {
+                _logger.LogInformation("Idempotent VNPay callback for already-paid order {OrderId}. Ignored.", order.Id);
+                result.IsSuccess = true;
+                result.Status = PaymentStatus.Paid;
+                result.Message = (result.Message ?? "").Length > 0 ? result.Message : "Order already paid. Callback ignored.";
+                return result;
+            }
+
+            // Find latest pending payment for this order
+            var pendingPayment = await _uow.PaymentRepository
+                .GetAllQueryable()
                 .Where(p => p.OrderId == order.Id && p.Status == PaymentStatus.Pending && !p.IsDeleted)
                 .OrderByDescending(p => p.CreatedAt)
-                .FirstOrDefault();
+                .FirstOrDefaultAsync(ct);
 
+            if (!result.IsSuccess)
+            {
+                // Failed callback: if we have a pending payment, mark it canceled; otherwise ignore for idempotency
+                if (pendingPayment != null)
+                {
+                    pendingPayment.Status = PaymentStatus.Canceled;
+                    await _uow.SaveChangesAsync();
+                }
+                else
+                {
+                    _logger.LogWarning("VNPay callback failed for order {OrderId} with no pending payment. Ignored.", order.Id);
+                }
+                return result;
+            }
+
+            // Success path
+            var payment = pendingPayment;
             if (payment is null)
             {
                 var method = await EnsureVnPayMethodAsync(ct);
@@ -104,30 +139,22 @@ namespace Infrastructure.Payments.Providers
                 await _uow.PaymentRepository.AddAsync(payment);
             }
 
-            if (result.IsSuccess)
+            payment.Status = PaymentStatus.Paid;
+            payment.PaidDate = DateTime.UtcNow;
+            order.Status = OrderStatus.Paid;
+
+            await _uow.SaveChangesAsync();
+
+            if (_enrollmentService != null)
             {
-                payment.Status = PaymentStatus.Paid;
-                payment.PaidDate = DateTime.UtcNow;
-                order.Status = OrderStatus.Paid;
-
-                await _uow.SaveChangesAsync();
-
-                if (_enrollmentService != null)
+                try
                 {
-                    try
-                    {
-                        await _enrollmentService.CreateFromOrderAsync(order.Id);
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Auto-enrollment failed for order {OrderId}", order.Id);
-                    }
+                    await _enrollmentService.CreateFromOrderAsync(order.Id);
                 }
-            }
-            else
-            {
-                payment.Status = PaymentStatus.Canceled;
-                await _uow.SaveChangesAsync();
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Auto-enrollment failed for order {OrderId}", order.Id);
+                }
             }
 
             return result;

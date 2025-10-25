@@ -45,6 +45,25 @@ namespace Application.Services
                 {
                     case ItemType.Course:
                         {
+                            // One-time purchase validation for Course
+                            var alreadyEnrolled = await _uow.EnrollmentRepository.GetAllQueryable()
+                                .AnyAsync(e => e.AccountId == accountId
+                                               && e.CourseId == it.ItemId
+                                               && !e.IsDeleted
+                                               && e.Status != EnrollmentStatus.Canceled);
+
+                            if (alreadyEnrolled)
+                                return Result<OrderSummaryDTO>.Fail($"Course #{it.ItemId} already purchased.", 400);
+
+                            var alreadyPaidOrder = await _uow.OrderRepository
+                                .GetAllQueryable($"{nameof(Order.OrderDetails)}")
+                                .AnyAsync(o => o.AccountId == accountId
+                                               && o.Status == OrderStatus.Paid
+                                               && o.OrderDetails.Any(d => !d.IsDeleted && d.ItemType == ItemType.Course && d.ItemId == it.ItemId));
+
+                            if (alreadyPaidOrder)
+                                return Result<OrderSummaryDTO>.Fail($"Course #{it.ItemId} already purchased.", 400);
+
                             var c = await _uow.CourseRepository.GetByIdAsync(it.ItemId);
                             if (c == null) return Result<OrderSummaryDTO>.Fail($"Course #{it.ItemId} not found.", 404);
                             var price = c.Price;
@@ -54,6 +73,16 @@ namespace Application.Services
                         }
                     case ItemType.CoursePackage:
                         {
+                            // One-time purchase validation for Package
+                            var alreadyPaidPackage = await _uow.OrderRepository
+                                .GetAllQueryable($"{nameof(Order.OrderDetails)}")
+                                .AnyAsync(o => o.AccountId == accountId
+                                               && o.Status == OrderStatus.Paid
+                                               && o.OrderDetails.Any(d => !d.IsDeleted && d.ItemType == ItemType.CoursePackage && d.ItemId == it.ItemId));
+
+                            if (alreadyPaidPackage)
+                                return Result<OrderSummaryDTO>.Fail($"Package #{it.ItemId} already purchased.", 400);
+
                             var p = await _uow.CoursePackageRepository.GetByIdAsync(it.ItemId);
                             if (p == null) return Result<OrderSummaryDTO>.Fail($"Package #{it.ItemId} not found.", 404);
                             var price = p.Price;

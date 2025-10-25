@@ -10,7 +10,7 @@ namespace WebAPI.Controllers
 {
     [ApiController]
     [ApiVersion("1.0")]
-    [Route("api/v{version:apiVersion}/[controller]")]
+    [Route("api/v{version:apiVersion}/vnpay")]
     public class VnPayController : ControllerBase
     {
         private readonly IPaymentOrchestrator _orchestrator;
