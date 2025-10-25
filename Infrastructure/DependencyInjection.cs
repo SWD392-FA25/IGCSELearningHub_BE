@@ -16,7 +16,7 @@ namespace Infrastructure
 {
     public static class DependencyInjection
     {
-        public static async Task<IServiceCollection> AddInfrastructureServicesAsync(this IServiceCollection services, IConfiguration config)
+        public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration config)
         {
             services.AddScoped<IUnitOfWork, UnitOfWork>();
             services.AddAutoMapper(cfg => { }, AppDomain.CurrentDomain.GetAssemblies());
@@ -49,6 +49,20 @@ namespace Infrastructure
             services.AddScoped<IJwtTokenService, JwtTokenService>();
             services.AddScoped<IDateTimeProvider, DateTimeProvider>();
             services.AddScoped<IAccountService, AccountService>();
+            services.AddScoped<IQuizService, QuizService>();
+            services.AddScoped<IQuizTakingService, QuizTakingService>();
+            services.AddScoped<ICourseCatalogService, CourseCatalogService>();
+            services.AddScoped<ICourseAdminService, CourseAdminService>();
+            services.AddScoped<IAssignmentAdminService, AssignmentAdminService>();
+            services.AddScoped<ILivestreamAdminService, LivestreamAdminService>();
+            services.AddScoped<ICoursePackageAdminService, CoursePackageAdminService>();
+            services.AddScoped<IEnrollmentAdminService, EnrollmentAdminService>();
+            services.AddScoped<IEnrollmentStudentService, EnrollmentStudentService>();
+            services.AddScoped<IStudentSubmissionService, StudentSubmissionService>();
+            services.AddScoped<IOrderService, OrderService>();
+            services.AddScoped<IOrderQueryService, OrderQueryService>();
+            services.AddScoped<IProgressService, ProgressService>();
+            services.AddScoped<IAnalyticsService, AnalyticsService>();
             #endregion
 
             #region quartz config

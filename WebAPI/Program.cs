@@ -34,7 +34,7 @@ namespace WebAPI
 
                 builder.Services.AddCors(options =>
                 {
-                    options.AddPolicy("AllowAll",
+                    options.AddPolicy("FrontendOnly",
                         policy => policy.AllowAnyOrigin()
                                         .AllowAnyMethod()
                                         .AllowAnyHeader());
@@ -92,7 +92,8 @@ namespace WebAPI
                     options.SubstituteApiVersionInUrl = true;
                 });
 
-                builder.Services.AddInfrastructureServicesAsync(builder.Configuration);
+                builder.Services.AddInfrastructureServices(builder.Configuration);
+                builder.Services.AddPaymentServices(builder.Configuration);
 
                 builder.Services.AddEndpointsApiExplorer();
                 builder.Services.AddSwaggerGen(c =>
@@ -151,11 +152,11 @@ namespace WebAPI
 
                 app.UseMiddleware<CorrelationIdMiddleware>();
 
-                app.UseMiddleware<RequestResponseLoggingMiddleware>();
-
                 app.UseMiddleware<GlobalExceptionMiddleware>();
 
-                app.UseCors("AllowAll");
+                app.UseMiddleware<RequestResponseLoggingMiddleware>();
+
+                app.UseCors("FrontendOnly");
 
                 app.UseAuthentication();
 

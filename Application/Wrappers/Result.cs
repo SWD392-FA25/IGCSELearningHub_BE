@@ -5,7 +5,7 @@ namespace Application.Wrappers
     {
         public bool Succeeded { get; set; }
         public string Status { get; set; } = "success";
-        public int StatusCode { get; set; }
+        public int StatusCode { get; set; } = 200;
         public string? Message { get; set; }
         public T? Data { get; set; }
         public Dictionary<string, object>? Details { get; set; }

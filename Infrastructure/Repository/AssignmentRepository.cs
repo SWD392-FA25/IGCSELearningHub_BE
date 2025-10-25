@@ -1,20 +1,17 @@
-﻿using Application.IRepository;
+using Application.IRepository;
+using Application.Utils.Interfaces;
 using Domain.Entities;
 using Infrastructure.Data;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Infrastructure.Repository
 {
     public class AssignmentRepository : GenericRepository<Assignment>, IAssignmentRepository
     {
         private readonly AppDbContext _appDbContext;
-        public AssignmentRepository(AppDbContext dbContext) : base(dbContext)
+        public AssignmentRepository(AppDbContext dbContext, IDateTimeProvider clock) : base(dbContext, clock)
         {
             _appDbContext = dbContext;
         }
     }
 }
+

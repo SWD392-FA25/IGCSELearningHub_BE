@@ -1,6 +1,4 @@
 ﻿using Domain.Common;
-using System;
-using System.Collections.Generic;
 
 namespace Domain.Entities;
 
@@ -13,6 +11,10 @@ public partial class Submission : BaseFullEntity
     public decimal? Score { get; set; }
 
     public DateTime SubmittedDate { get; set; }
+
+    public string? AttachmentUrl { get; set; }
+
+    public string? TextAnswer { get; set; }
 
     public virtual Assignment Assignment { get; set; } = null!;
 

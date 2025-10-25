@@ -1,4 +1,4 @@
-﻿using Application.ViewModels.Authentication;
+﻿using Application.DTOs.Authentication;
 using Application.Wrappers;
 using System;
 using System.Collections.Generic;

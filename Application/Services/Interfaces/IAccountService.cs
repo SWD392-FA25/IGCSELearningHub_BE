@@ -1,5 +1,5 @@
-﻿using Application.ViewModels;
-using Application.ViewModels.Accounts;
+﻿using Application.DTOs.Accounts;
+
 using Application.Wrappers;
 
 namespace Application.Services.Interfaces
@@ -8,8 +8,8 @@ namespace Application.Services.Interfaces
     {
         Task<Result<AccountDTO?>> GetAccountByIdAsync(int id);
         Task<Result<IEnumerable<AccountDTO>>> GetAllAccountsAsync();
-        Task<Result<PaginatedList<AccountDTO>>> GetAllAccountsPaginatedAsync(QueryParameters queryParameters);
-        Task<Result<bool>> CheckUsernameOrEmailExistsAsync(string email, string username);
+        Task<PagedResult<AccountDTO>> GetAccountsPagedAsync(string? q, string? role, string? status, int page, int pageSize, string? sort);
+        Task<Result<bool>> CheckUsernameOrEmailExistsAsync(string username, string email);
         Task<Result<AccountDTO?>> UpdateAccountAsync(int accountId, UpdateAccountDTO updateDto);
         Task<Result<string>> ResetPasswordAsync(ResetPasswordDTO dto);
         Task<Result<string>> BanAccountAsync(int accountId);
