@@ -1,5 +1,4 @@
-﻿
-namespace Application.ViewModels.Orders
+﻿namespace Application.DTOs.Orders
 {
     public class MyOrderListItemDTO
     {

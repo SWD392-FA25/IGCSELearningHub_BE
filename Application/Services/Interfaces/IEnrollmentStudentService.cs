@@ -1,4 +1,4 @@
-﻿using Application.ViewModels.Enrollments;
+﻿using Application.DTOs.Enrollments;
 using Application.Wrappers;
 using System;
 using System.Collections.Generic;

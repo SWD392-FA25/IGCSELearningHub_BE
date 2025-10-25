@@ -1,5 +1,5 @@
-﻿using Application.ViewModels.Accounts;
-using Application.ViewModels.Authentication;
+﻿using Application.DTOs.Accounts;
+using Application.DTOs.Authentication;
 using AutoMapper;
 using Domain.Entities;
 using System;

@@ -1,4 +1,4 @@
-﻿using Application.ViewModels.Progress;
+﻿using Application.DTOs.Progress;
 using Application.Wrappers;
 using System;
 using System.Collections.Generic;

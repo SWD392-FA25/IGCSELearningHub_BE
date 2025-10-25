@@ -1,5 +1,4 @@
 ﻿using Application.Services.Interfaces;
-using Application.ViewModels.Enrollments;
 using Application.Wrappers;
 using Application.Extensions;
 using Domain.Entities;
@@ -9,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Application.DTOs.Enrollments;
 
 namespace Application.Services
 {

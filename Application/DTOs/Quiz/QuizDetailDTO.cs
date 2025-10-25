@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Application.ViewModels.Quiz
+namespace Application.DTOs.Quiz
 {
     public class QuizDetailDTO : QuizSummaryDTO
     {

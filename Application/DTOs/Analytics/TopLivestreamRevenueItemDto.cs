@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Application.DTOs.Analytics
 {
-    public class TopLivestreamRevenueItemDto
+    public class TopLivestreamRevenueItemDTO
     {
         public int LivestreamId { get; set; }
         public string Title { get; set; } = null!;

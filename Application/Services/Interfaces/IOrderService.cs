@@ -1,4 +1,4 @@
-﻿using Application.ViewModels.Orders;
+﻿using Application.DTOs.Orders;
 using Application.Wrappers;
 
 namespace Application.Services.Interfaces

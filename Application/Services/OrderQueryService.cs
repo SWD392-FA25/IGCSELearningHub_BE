@@ -1,5 +1,5 @@
-﻿using Application.Services.Interfaces;
-using Application.ViewModels.Orders;
+﻿using Application.DTOs.Orders;
+using Application.Services.Interfaces;
 using Application.Wrappers;
 using Domain.Entities;
 using Microsoft.EntityFrameworkCore;

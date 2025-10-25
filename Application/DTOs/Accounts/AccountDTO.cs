@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Application.ViewModels.Accounts
+namespace Application.DTOs.Accounts
 {
     public class AccountDTO
     {

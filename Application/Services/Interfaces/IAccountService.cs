@@ -1,5 +1,5 @@
-﻿using Application.ViewModels;
-using Application.ViewModels.Accounts;
+﻿using Application.DTOs.Accounts;
+using Application.ViewModels;
 using Application.Wrappers;
 
 namespace Application.Services.Interfaces

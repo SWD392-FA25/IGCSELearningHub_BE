@@ -1,4 +1,4 @@
-﻿using Application.ViewModels.Assignments;
+using Application.DTOs.Assignments;
 using Application.Wrappers;
 using System;
 using System.Collections.Generic;
@@ -16,9 +16,10 @@ namespace Application.Services.Interfaces
         Task<Result<bool>> UpdateAsync(int assignmentId, AssignmentUpdateDTO dto);
         Task<Result<bool>> DeleteAsync(int assignmentId);
 
-        // Submissions (giáo viên xem/chấm)
+        // Submissions (gi�o vi�n xem/ch?m)
         Task<PagedResult<SubmissionListItemDTO>> GetSubmissionsAsync(int assignmentId, int page, int pageSize);
         Task<Result<SubmissionDetailDTO>> GetSubmissionDetailAsync(int submissionId);
         Task<Result<bool>> GradeSubmissionAsync(int submissionId, GradeSubmissionDto dto);
     }
 }
+

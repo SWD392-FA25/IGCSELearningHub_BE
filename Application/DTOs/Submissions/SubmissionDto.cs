@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Application.DTOs.Submissions
 {
-    public class SubmissionDto
+    public class SubmissionDTO
     {
         public int SubmissionId { get; set; }
         public int AssignmentId { get; set; }

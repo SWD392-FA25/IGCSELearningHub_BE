@@ -1,5 +1,5 @@
 ﻿using Application.Services.Interfaces;
-using Application.ViewModels.Assignments;
+using Application.DTOs.Assignments;
 using Application.Wrappers;
 using Application.Extensions;
 using Domain.Entities;

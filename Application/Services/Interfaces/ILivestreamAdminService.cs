@@ -1,4 +1,4 @@
-﻿using Application.ViewModels.Livestreams;
+﻿using Application.DTOs.Livestreams;
 using Application.Wrappers;
 
 namespace Application.Services.Interfaces

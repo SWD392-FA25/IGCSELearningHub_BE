@@ -1,6 +1,6 @@
 ﻿using Domain.Enums;
 
-namespace Application.ViewModels.Enrollments
+namespace Application.DTOs.Enrollments
 {
     public class MyEnrollmentItemDTO
     {

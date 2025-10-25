@@ -1,4 +1,4 @@
-﻿using Application.ViewModels.Packages;
+﻿using Application.DTOs.CoursePackages;
 using Application.Wrappers;
 using System;
 using System.Collections.Generic;

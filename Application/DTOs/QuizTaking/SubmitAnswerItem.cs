@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Application.ViewModels.QuizTaking
+namespace Application.DTOs.QuizTaking
 {
     public class SubmitAnswerItem
     {

@@ -58,6 +58,7 @@ namespace Infrastructure
             services.AddScoped<ICoursePackageAdminService, CoursePackageAdminService>();
             services.AddScoped<IEnrollmentAdminService, EnrollmentAdminService>();
             services.AddScoped<IEnrollmentStudentService, EnrollmentStudentService>();
+            services.AddScoped<IStudentSubmissionService, StudentSubmissionService>();
             services.AddScoped<IOrderService, OrderService>();
             services.AddScoped<IOrderQueryService, OrderQueryService>();
             services.AddScoped<IProgressService, ProgressService>();

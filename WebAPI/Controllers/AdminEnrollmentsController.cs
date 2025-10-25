@@ -1,5 +1,5 @@
-﻿using Application.Services.Interfaces;
-using Application.ViewModels.Enrollments;
+﻿using Application.DTOs.Enrollments;
+using Application.Services.Interfaces;
 using Asp.Versioning;
 using Domain.Enums;
 using Microsoft.AspNetCore.Authorization;

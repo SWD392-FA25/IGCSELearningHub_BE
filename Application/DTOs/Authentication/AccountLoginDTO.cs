@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Application.ViewModels.Authentication
+namespace Application.DTOs.Authentication
 {
     public class AccountLoginDTO
     {

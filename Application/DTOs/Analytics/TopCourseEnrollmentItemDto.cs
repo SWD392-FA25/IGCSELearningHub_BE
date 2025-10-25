@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Application.DTOs.Analytics
 {
-    public class TopCourseEnrollmentItemDto
+    public class TopCourseEnrollmentItemDTO
     {
         public int CourseId { get; set; }
         public string Title { get; set; } = null!;

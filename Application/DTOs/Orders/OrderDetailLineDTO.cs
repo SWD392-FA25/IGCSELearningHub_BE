@@ -1,5 +1,5 @@
 ﻿using Domain.Enums;
-namespace Application.ViewModels.Orders
+namespace Application.DTOs.Orders
 {
     public class OrderDetailLineDTO
     {

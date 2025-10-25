@@ -1,4 +1,4 @@
-﻿using Application.ViewModels.Quiz;
+﻿using Application.DTOs.Quiz;
 using Application.Wrappers;
 using System;
 using System.Collections.Generic;

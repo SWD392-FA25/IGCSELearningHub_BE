@@ -1,7 +1,7 @@
 ﻿using Application.Constants;
 using System.ComponentModel.DataAnnotations;
 
-namespace Application.ViewModels
+namespace Application.DTOs
 {
     public class PaginationFilter
     {
@@ -15,7 +15,7 @@ namespace Application.ViewModels
         public int PageSize
         {
             get => _pageSize;
-            set => _pageSize = (value > MaxPageSize) ? MaxPageSize : value;
+            set => _pageSize = value > MaxPageSize ? MaxPageSize : value;
         }
     }
 }

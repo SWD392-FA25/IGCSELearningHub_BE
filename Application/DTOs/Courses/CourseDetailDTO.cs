@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Application.ViewModels.Courses
+namespace Application.DTOs.Courses
 {
     public class CourseDetailDTO
     {

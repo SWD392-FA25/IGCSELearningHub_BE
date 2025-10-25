@@ -1,7 +1,7 @@
-﻿using Application.Payments.DTOs;
+﻿using Application.DTOs.Orders;
+using Application.Payments.DTOs;
 using Application.Payments.Interfaces;
 using Application.Services.Interfaces;
-using Application.ViewModels.Orders;
 using Application.Wrappers;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;

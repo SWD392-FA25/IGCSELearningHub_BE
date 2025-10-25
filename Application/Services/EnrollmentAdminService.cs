@@ -1,12 +1,12 @@
 using Application.Services.Interfaces;
 using Application.Utils.Interfaces;
 using Application.Extensions;
-using Application.ViewModels.Enrollments;
 using Application.Wrappers;
 using Domain.Entities;
 using Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Application.DTOs.Enrollments;
 
 namespace Application.Services
 {

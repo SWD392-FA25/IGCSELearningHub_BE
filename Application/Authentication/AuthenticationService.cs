@@ -1,5 +1,5 @@
 ﻿using Application.Authentication.Interfaces;
-using Application.ViewModels.Authentication;
+using Application.DTOs.Authentication;
 using Application.Wrappers;
 using AutoMapper;
 using Domain.Entities;

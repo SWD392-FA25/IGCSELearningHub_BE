@@ -10,7 +10,7 @@ namespace Application.Services.Interfaces
 {
     public interface IStudentSubmissionService
     {
-        Task<Result<SubmissionDto>> SubmitAsync(int accountId, int assignmentId, CreateSubmissionRequest req);
-        Task<PagedResult<SubmissionDto>> GetMySubmissionsAsync(int accountId, int assignmentId, int page, int pageSize);
+        Task<Result<SubmissionDTO>> SubmitAsync(int accountId, int assignmentId, CreateSubmissionRequest req);
+        Task<PagedResult<SubmissionDTO>> GetMySubmissionsAsync(int accountId, int assignmentId, int page, int pageSize);
     }
 }

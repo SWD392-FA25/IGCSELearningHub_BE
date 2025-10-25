@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Application.DTOs.Analytics
 {
-    public class CountPointDto
+    public class CountPointDTO
     {
         public int Year { get; set; }
         public int Month { get; set; }

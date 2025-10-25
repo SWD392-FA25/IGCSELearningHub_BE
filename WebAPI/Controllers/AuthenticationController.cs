@@ -1,6 +1,6 @@
 ﻿using Application.Authentication.Interfaces;
+using Application.DTOs.Authentication;
 using Application.Exceptions;
-using Application.ViewModels.Authentication;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

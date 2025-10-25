@@ -27,20 +27,20 @@ namespace Application.Services
             _logger = logger;
         }
 
-        public async Task<Result<SubmissionDto>> SubmitAsync(int accountId, int assignmentId, CreateSubmissionRequest req)
+        public async Task<Result<SubmissionDTO>> SubmitAsync(int accountId, int assignmentId, CreateSubmissionRequest req)
         {
             if (string.IsNullOrWhiteSpace(req.AttachmentUrl))
-                return Result<SubmissionDto>.Fail("Attachment URL is required.", 400);
+                return Result<SubmissionDTO>.Fail("Attachment URL is required.", 400);
 
             var assignment = await _uow.AssignmentRepository.GetAllQueryable($"{nameof(Assignment.Course)}")
                 .FirstOrDefaultAsync(a => a.Id == assignmentId);
             if (assignment == null)
-                return Result<SubmissionDto>.Fail("Assignment not found.", 404);
+                return Result<SubmissionDTO>.Fail("Assignment not found.", 404);
 
             var enrolled = await _uow.EnrollmentRepository.GetAllQueryable()
                 .AnyAsync(e => e.AccountId == accountId && e.CourseId == assignment.CourseId && !e.IsDeleted);
             if (!enrolled)
-                return Result<SubmissionDto>.Fail("You are not enrolled in this course.", 403);
+                return Result<SubmissionDTO>.Fail("You are not enrolled in this course.", 403);
 
             var sub = new Submission
             {
@@ -54,7 +54,7 @@ namespace Application.Services
             await _uow.SubmissionRepository.AddAsync(sub);
             await _uow.SaveChangesAsync();
 
-            var dto = new SubmissionDto
+            var dto = new SubmissionDTO
             {
                 SubmissionId = sub.Id,
                 AssignmentId = sub.AssignmentId,
@@ -65,16 +65,16 @@ namespace Application.Services
                 TextAnswer = sub.TextAnswer
             };
 
-            return Result<SubmissionDto>.Success(dto, "Submission created successfully.", 201);
+            return Result<SubmissionDTO>.Success(dto, "Submission created successfully.", 201);
         }
 
-        public async Task<PagedResult<SubmissionDto>> GetMySubmissionsAsync(int accountId, int assignmentId, int page, int pageSize)
+        public async Task<PagedResult<SubmissionDTO>> GetMySubmissionsAsync(int accountId, int assignmentId, int page, int pageSize)
         {
             var q = _uow.SubmissionRepository.GetAllQueryable()
                 .Where(s => s.AccountId == accountId && s.AssignmentId == assignmentId)
                 .OrderByDescending(s => s.SubmittedDate);
 
-            return await q.ToPagedResultAsync(page, pageSize, s => new SubmissionDto
+            return await q.ToPagedResultAsync(page, pageSize, s => new SubmissionDTO
             {
                 SubmissionId = s.Id,
                 AssignmentId = s.AssignmentId,

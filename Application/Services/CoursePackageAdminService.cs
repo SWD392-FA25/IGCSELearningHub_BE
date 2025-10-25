@@ -1,5 +1,4 @@
 ﻿using Application.Services.Interfaces;
-using Application.ViewModels.Packages;
 using Application.Wrappers;
 using Application.Extensions;
 using Domain.Entities;
@@ -10,6 +9,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Application.DTOs.CoursePackages;
 
 namespace Application.Services
 {

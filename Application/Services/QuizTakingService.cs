@@ -1,11 +1,11 @@
 using Application.Services.Interfaces;
 using Application.Utils.Interfaces;
-using Application.ViewModels.QuizTaking;
 using Application.Wrappers;
 using Application.Extensions;
 using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Application.DTOs.QuizTaking;
 
 namespace Application.Services
 {

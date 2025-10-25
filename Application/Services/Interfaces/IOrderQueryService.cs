@@ -1,4 +1,4 @@
-﻿using Application.ViewModels.Orders;
+﻿using Application.DTOs.Orders;
 using Application.Wrappers;
 using System;
 using System.Collections.Generic;

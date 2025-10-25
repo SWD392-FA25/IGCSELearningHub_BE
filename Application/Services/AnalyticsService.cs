@@ -49,7 +49,7 @@ namespace Application.Services
 
         // ========= KPIs =========
 
-        public async Task<Result<KpiSummaryDto>> GetKpisAsync(DateRangeQuery q)
+        public async Task<Result<KpiSummaryDTO>> GetKpisAsync(DateRangeQuery q)
         {
             var (from, to) = NormalizeRange(q);
 
@@ -74,7 +74,7 @@ namespace Application.Services
             var paidUserCount = await ordersPaid.Select(o => o.AccountId).Distinct().CountAsync();
             var arpu = paidUserCount > 0 ? revenue / paidUserCount : 0m;
 
-            var dto = new KpiSummaryDto
+            var dto = new KpiSummaryDTO
             {
                 RevenuePaid = revenue,
                 OrdersPaid = ordersCount,
@@ -83,12 +83,12 @@ namespace Application.Services
                 LivestreamRegistrations = lrs,
                 ARPU = arpu
             };
-            return Result<KpiSummaryDto>.Success(dto);
+            return Result<KpiSummaryDTO>.Success(dto);
         }
 
         // ========= Time-series =========
 
-        public async Task<Result<RevenueSeriesDto>> GetRevenueSeriesAsync(DateRangeQuery q)
+        public async Task<Result<RevenueSeriesDTO>> GetRevenueSeriesAsync(DateRangeQuery q)
         {
             var (from, to) = NormalizeRange(q);
             var gb = q.GroupBy;
@@ -96,23 +96,23 @@ namespace Application.Services
             var ordersPaid = _uow.OrderRepository.GetAllQueryable()
                 .Where(o => !o.IsDeleted && o.OrderDate >= from && o.OrderDate <= to && o.Status == OrderStatus.Paid);
 
-            IQueryable<TimePointDto> baseQuery =
+            IQueryable<TimePointDTO> baseQuery =
                 gb == GroupBy.Day
                 ? ordersPaid
                     .GroupBy(o => new { o.OrderDate.Year, o.OrderDate.Month, o.OrderDate.Day })
-                    .Select(g => new TimePointDto { Year = g.Key.Year, Month = g.Key.Month, Day = g.Key.Day, Value = g.Sum(x => x.TotalAmount) })
+                    .Select(g => new TimePointDTO { Year = g.Key.Year, Month = g.Key.Month, Day = g.Key.Day, Value = g.Sum(x => x.TotalAmount) })
                 : ordersPaid
                     .GroupBy(o => new { o.OrderDate.Year, o.OrderDate.Month })
-                    .Select(g => new TimePointDto { Year = g.Key.Year, Month = g.Key.Month, Day = null, Value = g.Sum(x => x.TotalAmount) });
+                    .Select(g => new TimePointDTO { Year = g.Key.Year, Month = g.Key.Month, Day = null, Value = g.Sum(x => x.TotalAmount) });
 
             var points = await baseQuery
                 .OrderBy(p => p.Year).ThenBy(p => p.Month).ThenBy(p => p.Day)
                 .ToListAsync();
 
-            return Result<RevenueSeriesDto>.Success(new RevenueSeriesDto { Points = points });
+            return Result<RevenueSeriesDTO>.Success(new RevenueSeriesDTO { Points = points });
         }
 
-        public async Task<Result<CountSeriesDto>> GetOrdersSeriesAsync(DateRangeQuery q)
+        public async Task<Result<CountSeriesDTO>> GetOrdersSeriesAsync(DateRangeQuery q)
         {
             var (from, to) = NormalizeRange(q);
             var gb = q.GroupBy;
@@ -120,18 +120,18 @@ namespace Application.Services
             var orders = _uow.OrderRepository.GetAllQueryable()
                 .Where(o => !o.IsDeleted && o.OrderDate >= from && o.OrderDate <= to);
 
-            IQueryable<CountPointDto> baseQuery =
+            IQueryable<CountPointDTO> baseQuery =
                 gb == GroupBy.Day
                 ? orders.GroupBy(o => new { o.OrderDate.Year, o.OrderDate.Month, o.OrderDate.Day })
-                        .Select(g => new CountPointDto { Year = g.Key.Year, Month = g.Key.Month, Day = g.Key.Day, Count = g.Count() })
+                        .Select(g => new CountPointDTO { Year = g.Key.Year, Month = g.Key.Month, Day = g.Key.Day, Count = g.Count() })
                 : orders.GroupBy(o => new { o.OrderDate.Year, o.OrderDate.Month })
-                        .Select(g => new CountPointDto { Year = g.Key.Year, Month = g.Key.Month, Day = null, Count = g.Count() });
+                        .Select(g => new CountPointDTO { Year = g.Key.Year, Month = g.Key.Month, Day = null, Count = g.Count() });
 
             var points = await baseQuery.OrderBy(p => p.Year).ThenBy(p => p.Month).ThenBy(p => p.Day).ToListAsync();
-            return Result<CountSeriesDto>.Success(new CountSeriesDto { SeriesName = "Orders", Points = points });
+            return Result<CountSeriesDTO>.Success(new CountSeriesDTO { SeriesName = "Orders", Points = points });
         }
 
-        public async Task<Result<CountSeriesDto>> GetEnrollmentsSeriesAsync(DateRangeQuery q)
+        public async Task<Result<CountSeriesDTO>> GetEnrollmentsSeriesAsync(DateRangeQuery q)
         {
             var (from, to) = NormalizeRange(q);
             var gb = q.GroupBy;
@@ -139,18 +139,18 @@ namespace Application.Services
             var enrolls = _uow.EnrollmentRepository.GetAllQueryable()
                 .Where(e => !e.IsDeleted && e.EnrollmentDate >= from && e.EnrollmentDate <= to);
 
-            IQueryable<CountPointDto> baseQuery =
+            IQueryable<CountPointDTO> baseQuery =
                 gb == GroupBy.Day
                 ? enrolls.GroupBy(e => new { e.EnrollmentDate.Year, e.EnrollmentDate.Month, e.EnrollmentDate.Day })
-                        .Select(g => new CountPointDto { Year = g.Key.Year, Month = g.Key.Month, Day = g.Key.Day, Count = g.Count() })
+                        .Select(g => new CountPointDTO { Year = g.Key.Year, Month = g.Key.Month, Day = g.Key.Day, Count = g.Count() })
                 : enrolls.GroupBy(e => new { e.EnrollmentDate.Year, e.EnrollmentDate.Month })
-                        .Select(g => new CountPointDto { Year = g.Key.Year, Month = g.Key.Month, Day = null, Count = g.Count() });
+                        .Select(g => new CountPointDTO { Year = g.Key.Year, Month = g.Key.Month, Day = null, Count = g.Count() });
 
             var points = await baseQuery.OrderBy(p => p.Year).ThenBy(p => p.Month).ThenBy(p => p.Day).ToListAsync();
-            return Result<CountSeriesDto>.Success(new CountSeriesDto { SeriesName = "Enrollments", Points = points });
+            return Result<CountSeriesDTO>.Success(new CountSeriesDTO { SeriesName = "Enrollments", Points = points });
         }
 
-        public async Task<Result<CountSeriesDto>> GetUserGrowthSeriesAsync(DateRangeQuery q)
+        public async Task<Result<CountSeriesDTO>> GetUserGrowthSeriesAsync(DateRangeQuery q)
         {
             var (from, to) = NormalizeRange(q);
             var gb = q.GroupBy;
@@ -158,18 +158,18 @@ namespace Application.Services
             var users = _uow.AccountRepository.GetAllQueryable()
                 .Where(a => !a.IsDeleted && a.CreatedAt >= from && a.CreatedAt <= to);
 
-            IQueryable<CountPointDto> baseQuery =
+            IQueryable<CountPointDTO> baseQuery =
                 gb == GroupBy.Day
                 ? users.GroupBy(a => new { a.CreatedAt.Year, a.CreatedAt.Month, a.CreatedAt.Day })
-                      .Select(g => new CountPointDto { Year = g.Key.Year, Month = g.Key.Month, Day = g.Key.Day, Count = g.Count() })
+                      .Select(g => new CountPointDTO { Year = g.Key.Year, Month = g.Key.Month, Day = g.Key.Day, Count = g.Count() })
                 : users.GroupBy(a => new { a.CreatedAt.Year, a.CreatedAt.Month })
-                      .Select(g => new CountPointDto { Year = g.Key.Year, Month = g.Key.Month, Day = null, Count = g.Count() });
+                      .Select(g => new CountPointDTO { Year = g.Key.Year, Month = g.Key.Month, Day = null, Count = g.Count() });
 
             var points = await baseQuery.OrderBy(p => p.Year).ThenBy(p => p.Month).ThenBy(p => p.Day).ToListAsync();
-            return Result<CountSeriesDto>.Success(new CountSeriesDto { SeriesName = "New Users", Points = points });
+            return Result<CountSeriesDTO>.Success(new CountSeriesDTO { SeriesName = "New Users", Points = points });
         }
 
-        public async Task<Result<RevenueSeriesDto>> GetLivestreamRevenueSeriesAsync(DateRangeQuery q)
+        public async Task<Result<RevenueSeriesDTO>> GetLivestreamRevenueSeriesAsync(DateRangeQuery q)
         {
             var (from, to) = NormalizeRange(q);
             var gb = q.GroupBy;
@@ -181,18 +181,18 @@ namespace Application.Services
                 .SelectMany(o => o.OrderDetails.Where(d => !d.IsDeleted && d.ItemType == ItemType.Livestream)
                                                .Select(d => new { o.OrderDate, d.Price }));
 
-            IQueryable<TimePointDto> baseQuery =
+            IQueryable<TimePointDTO> baseQuery =
                 gb == GroupBy.Day
                 ? details.GroupBy(x => new { x.OrderDate.Year, x.OrderDate.Month, x.OrderDate.Day })
-                         .Select(g => new TimePointDto { Year = g.Key.Year, Month = g.Key.Month, Day = g.Key.Day, Value = g.Sum(x => x.Price) })
+                         .Select(g => new TimePointDTO { Year = g.Key.Year, Month = g.Key.Month, Day = g.Key.Day, Value = g.Sum(x => x.Price) })
                 : details.GroupBy(x => new { x.OrderDate.Year, x.OrderDate.Month })
-                         .Select(g => new TimePointDto { Year = g.Key.Year, Month = g.Key.Month, Day = null, Value = g.Sum(x => x.Price) });
+                         .Select(g => new TimePointDTO { Year = g.Key.Year, Month = g.Key.Month, Day = null, Value = g.Sum(x => x.Price) });
 
             var points = await baseQuery.OrderBy(p => p.Year).ThenBy(p => p.Month).ThenBy(p => p.Day).ToListAsync();
-            return Result<RevenueSeriesDto>.Success(new RevenueSeriesDto { Points = points });
+            return Result<RevenueSeriesDTO>.Success(new RevenueSeriesDTO { Points = points });
         }
 
-        public async Task<PagedResult<TopCourseRevenueItemDto>> GetTopCoursesByRevenueAsync(DateRangeQuery q, int page, int pageSize)
+        public async Task<PagedResult<TopCourseRevenueItemDTO>> GetTopCoursesByRevenueAsync(DateRangeQuery q, int page, int pageSize)
         {
             var (from, to) = NormalizeRange(q);
             page = Math.Max(1, page);
@@ -222,7 +222,7 @@ namespace Application.Services
                 .Select(c => new { c.Id, c.Title })
                 .ToDictionaryAsync(x => x.Id, x => x.Title);
 
-            var pageDataWithTitles = pageData.Select(x => new TopCourseRevenueItemDto
+            var pageDataWithTitles = pageData.Select(x => new TopCourseRevenueItemDTO
             {
                 CourseId = x.CourseId,
                 Title = courseTitles.TryGetValue(x.CourseId, out var t) ? t : $"Course #{x.CourseId}",
@@ -230,10 +230,10 @@ namespace Application.Services
                 Orders = x.Orders
             }).ToList();
 
-            return PagedResult<TopCourseRevenueItemDto>.Success(pageDataWithTitles, total, page, pageSize);
+            return PagedResult<TopCourseRevenueItemDTO>.Success(pageDataWithTitles, total, page, pageSize);
         }
 
-        public async Task<PagedResult<TopCourseEnrollmentItemDto>> GetTopCoursesByEnrollmentsAsync(DateRangeQuery q, int page, int pageSize)
+        public async Task<PagedResult<TopCourseEnrollmentItemDTO>> GetTopCoursesByEnrollmentsAsync(DateRangeQuery q, int page, int pageSize)
         {
             var (from, to) = NormalizeRange(q);
             page = Math.Max(1, page);
@@ -251,7 +251,7 @@ namespace Application.Services
                 .OrderByDescending(x => x.Enrollments)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
-                .Select(x => new TopCourseEnrollmentItemDto
+                .Select(x => new TopCourseEnrollmentItemDTO
                 {
                     CourseId = x.CourseId,
                     Title = x.Title,
@@ -259,10 +259,10 @@ namespace Application.Services
                 })
                 .ToListAsync();
 
-            return PagedResult<TopCourseEnrollmentItemDto>.Success(pageData, total, page, pageSize);
+            return PagedResult<TopCourseEnrollmentItemDTO>.Success(pageData, total, page, pageSize);
         }
 
-        public async Task<PagedResult<TopLivestreamRevenueItemDto>> GetTopLivestreamsByRevenueAsync(DateRangeQuery q, int page, int pageSize)
+        public async Task<PagedResult<TopLivestreamRevenueItemDTO>> GetTopLivestreamsByRevenueAsync(DateRangeQuery q, int page, int pageSize)
         {
             var (from, to) = NormalizeRange(q);
             page = Math.Max(1, page);
@@ -292,7 +292,7 @@ namespace Application.Services
                 .Select(l => new { l.Id, l.Title })
                 .ToDictionaryAsync(x => x.Id, x => x.Title);
 
-            var pageDataWithTitles = pageData.Select(x => new TopLivestreamRevenueItemDto
+            var pageDataWithTitles = pageData.Select(x => new TopLivestreamRevenueItemDTO
             {
                 LivestreamId = x.LivestreamId,
                 Title = livestreamTitles.TryGetValue(x.LivestreamId, out var t) ? t : $"Livestream #{x.LivestreamId}",
@@ -300,7 +300,7 @@ namespace Application.Services
                 Orders = x.Orders
             }).ToList();
 
-            return PagedResult<TopLivestreamRevenueItemDto>.Success(pageDataWithTitles, total, page, pageSize);
+            return PagedResult<TopLivestreamRevenueItemDTO>.Success(pageDataWithTitles, total, page, pageSize);
         }
     }
 }

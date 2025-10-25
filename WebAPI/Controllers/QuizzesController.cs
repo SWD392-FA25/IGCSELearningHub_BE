@@ -1,6 +1,6 @@
-﻿using Application.Services.Interfaces;
-using Application.ViewModels;
-using Application.ViewModels.Quiz;
+﻿using Application.DTOs;
+using Application.DTOs.Quiz;
+using Application.Services.Interfaces;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace Application.DTOs.Analytics
 {
-    public class CountSeriesDto
+    public class CountSeriesDTO
     {
         public string SeriesName { get; set; } = "Count";
-        public List<CountPointDto> Points { get; set; } = new();
+        public List<CountPointDTO> Points { get; set; } = new();
     }
 }

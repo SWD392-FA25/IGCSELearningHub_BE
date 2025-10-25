@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Application.ViewModels.Enrollments
+namespace Application.DTOs.Enrollments
 {
     public class CreateEnrollmentFromOrderDTO
     {

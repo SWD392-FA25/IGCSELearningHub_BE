@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Application.ViewModels.Authentication
+namespace Application.DTOs.Authentication
 {
     public class AuthenticatedUserDTO
     {

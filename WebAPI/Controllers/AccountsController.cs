@@ -1,7 +1,7 @@
-﻿using Application.Exceptions;
+﻿using Application.DTOs.Accounts;
+using Application.Exceptions;
 using Application.Services.Interfaces;
 using Application.ViewModels;
-using Application.ViewModels.Accounts;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Application.DTOs.Analytics
 {
-    public class KpiSummaryDto
+    public class KpiSummaryDTO
     {
         public decimal RevenuePaid { get; set; }         // Tổng doanh thu (đã thanh toán)
         public int OrdersPaid { get; set; }              // Số đơn đã thanh toán

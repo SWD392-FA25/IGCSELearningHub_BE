@@ -1,5 +1,4 @@
 ﻿using Application.Services.Interfaces;
-using Application.ViewModels.Orders;
 using Application.Wrappers;
 using Application.Extensions;
 using Domain.Entities;
@@ -12,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Application.DTOs.Orders;
 
 namespace Application.Services
 {
