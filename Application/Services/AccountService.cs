@@ -2,6 +2,7 @@
 using Application.ViewModels;
 using Application.ViewModels.Accounts;
 using Application.Wrappers;
+using Application.Extensions;
 using AutoMapper;
 using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -41,9 +42,6 @@ namespace Application.Services
 
         public async Task<PagedResult<AccountDTO>> GetAccountsPagedAsync(string? q, string? role, string? status, int page, int pageSize, string? sort)
         {
-            page = page < 1 ? 1 : page;
-            pageSize = pageSize is <= 0 or > 100 ? 20 : pageSize;
-
             var query = _unitOfWork.AccountRepository.GetAllQueryable();
 
             if (!string.IsNullOrWhiteSpace(q))
@@ -78,15 +76,7 @@ namespace Application.Services
                 _ => query.OrderByDescending(a => a.CreatedAt)
             };
 
-            var total = await query.CountAsync();
-
-            var data = await query
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .Select(a => _mapper.Map<AccountDTO>(a))
-                .ToListAsync();
-
-            return PagedResult<AccountDTO>.Success(data, total, page, pageSize);
+            return await query.ToPagedResultAsync(page, pageSize, a => _mapper.Map<AccountDTO>(a));
         }
 
         public async Task<Result<bool>> CheckUsernameOrEmailExistsAsync(string username, string email)

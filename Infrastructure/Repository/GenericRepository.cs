@@ -1,4 +1,5 @@
-﻿using Application.IRepository;
+using Application.IRepository;
+using Application.Utils.Interfaces;
 using Domain.Common;
 using Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -6,17 +7,24 @@ using System.Linq.Expressions;
 
 namespace Infrastructure.Repository
 {
-    public class GenericRepository<TModel> :IGenericRepository<TModel> where TModel : BaseFullEntity
+    public class GenericRepository<TModel> : IGenericRepository<TModel> where TModel : BaseFullEntity
     {
         protected DbSet<TModel> _dbSet;
+        private readonly IDateTimeProvider _clock;
 
-        public GenericRepository(AppDbContext dbContext)
+        public GenericRepository(AppDbContext dbContext, IDateTimeProvider clock)
         {
             _dbSet = dbContext.Set<TModel>();
+            _clock = clock;
         }
 
         public async Task AddAsync(TModel model)
         {
+            if (model != null)
+            {
+                model.CreatedAt = _clock.UtcNow;
+                model.ModifiedAt = _clock.UtcNow;
+            }
             await _dbSet.AddAsync(model);
         }
 
@@ -27,15 +35,14 @@ namespace Infrastructure.Repository
 
         public async Task<IEnumerable<TModel>> GetAllAsync()
         {
-            return await _dbSet.Where(e => !e.IsDeleted).ToListAsync();
+            return await _dbSet.AsNoTracking().Where(e => !e.IsDeleted).ToListAsync();
         }
 
         public async Task<TModel> GetByIdAsync(int id)
         {
-            TModel? model = await _dbSet.FindAsync(id);
+            TModel? model = await _dbSet.AsNoTracking().FirstOrDefaultAsync(e => e.Id == id && !e.IsDeleted);
             if (model == null || model.IsDeleted == true)
             {
-                //throw new Exceptions.InfrastructureException(HttpStatusCode.BadRequest, $"{model} not found");
             }
             return model;
         }
@@ -43,22 +50,21 @@ namespace Infrastructure.Repository
         public void SoftDelete(TModel model)
         {
             model.IsDeleted = true;
-            model.ModifiedAt = DateTime.UtcNow;
+            model.ModifiedAt = _clock.UtcNow;
         }
 
         public void Update(TModel model)
         {
             if (model == null || model.IsDeleted == true)
             {
-                //throw new Exceptions.InfrastructureException(HttpStatusCode.BadRequest, "Data is not exist");
             }
-            model.ModifiedAt = DateTime.UtcNow;
+            model.ModifiedAt = _clock.UtcNow;
             _dbSet.Update(model);
         }
 
         public virtual IQueryable<TModel> GetAllQueryable(string includeProperties = "")
         {
-            IQueryable<TModel> query = _dbSet;
+            IQueryable<TModel> query = _dbSet.AsNoTracking();
 
             if (!string.IsNullOrWhiteSpace(includeProperties))
             {
@@ -73,7 +79,7 @@ namespace Infrastructure.Repository
 
         public async Task<TModel> FindOneAsync(Expression<Func<TModel, bool>> predicate, string includeProperties = "")
         {
-            IQueryable<TModel> query = _dbSet;
+            IQueryable<TModel> query = _dbSet.AsNoTracking();
 
             if (!string.IsNullOrWhiteSpace(includeProperties))
             {
@@ -87,3 +93,4 @@ namespace Infrastructure.Repository
         }
     }
 }
+

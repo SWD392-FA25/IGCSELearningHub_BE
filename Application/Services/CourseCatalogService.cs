@@ -1,6 +1,7 @@
 ﻿using Application.Services.Interfaces;
 using Application.ViewModels.Courses;
 using Application.Wrappers;
+using Application.Extensions;
 using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -27,9 +28,6 @@ namespace Application.Services
             string? q, string? level, decimal? priceMin, decimal? priceMax,
             int page, int pageSize, string? sort)
         {
-            page = page < 1 ? 1 : page;
-            pageSize = pageSize is <= 0 or > 100 ? 20 : pageSize;
-
             var query = _uow.CourseRepository.GetAllQueryable();
 
             if (!string.IsNullOrWhiteSpace(q))
@@ -57,27 +55,19 @@ namespace Application.Services
                 _ => query.OrderByDescending(c => c.CreatedAt)
             };
 
-            var total = await query.CountAsync();
-
             // Include counts via navigation collections using subqueries (efficient)
-            var data = await query
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .Select(c => new CourseCatalogItemDTO
-                {
-                    Id = c.Id,
-                    Title = c.Title,
-                    Level = c.Level,
-                    Price = c.Price,
-                    ShortDescription = c.Description != null && c.Description.Length > 160
-                        ? c.Description.Substring(0, 160) + "..."
-                        : c.Description,
-                    TotalQuizzes = c.Quizzes.Count(x => !x.IsDeleted),
-                    TotalAssignments = c.Assignments.Count(x => !x.IsDeleted)
-                })
-                .ToListAsync();
-
-            return PagedResult<CourseCatalogItemDTO>.Success(data, total, page, pageSize);
+            return await query.ToPagedResultAsync(page, pageSize, c => new CourseCatalogItemDTO
+            {
+                Id = c.Id,
+                Title = c.Title,
+                Level = c.Level,
+                Price = c.Price,
+                ShortDescription = c.Description != null && c.Description.Length > 160
+                    ? c.Description.Substring(0, 160) + "..."
+                    : c.Description,
+                TotalQuizzes = c.Quizzes.Count(x => !x.IsDeleted),
+                TotalAssignments = c.Assignments.Count(x => !x.IsDeleted)
+            });
         }
 
         public async Task<Result<CourseDetailDTO>> GetDetailAsync(int courseId)

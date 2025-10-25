@@ -1,14 +1,10 @@
 ﻿using Application.Services.Interfaces;
 using Application.ViewModels.Courses;
 using Application.Wrappers;
+using Application.Extensions;
 using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Application.Services
 {
@@ -26,9 +22,6 @@ namespace Application.Services
         public async Task<PagedResult<CourseAdminListItemDTO>> GetListAsync(
             string? q, string? level, int page, int pageSize, string? sort)
         {
-            page = page < 1 ? 1 : page;
-            pageSize = pageSize is <= 0 or > 100 ? 20 : pageSize;
-
             var query = _uow.CourseRepository.GetAllQueryable();
 
             if (!string.IsNullOrWhiteSpace(q))
@@ -53,22 +46,14 @@ namespace Application.Services
                 _ => query.OrderByDescending(c => c.CreatedAt)
             };
 
-            var total = await query.CountAsync();
-
-            var data = await query
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .Select(c => new CourseAdminListItemDTO
-                {
-                    Id = c.Id,
-                    Title = c.Title,
-                    Level = c.Level,
-                    Price = c.Price,
-                    CreatedAt = c.CreatedAt
-                })
-                .ToListAsync();
-
-            return PagedResult<CourseAdminListItemDTO>.Success(data, total, page, pageSize);
+            return await query.ToPagedResultAsync(page, pageSize, c => new CourseAdminListItemDTO
+            {
+                Id = c.Id,
+                Title = c.Title,
+                Level = c.Level,
+                Price = c.Price,
+                CreatedAt = c.CreatedAt
+            });
         }
 
         public async Task<Result<CourseAdminDetailDTO>> GetDetailAsync(int courseId)

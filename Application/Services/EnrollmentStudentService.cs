@@ -1,6 +1,7 @@
 ﻿using Application.Services.Interfaces;
 using Application.ViewModels.Enrollments;
 using Application.Wrappers;
+using Application.Extensions;
 using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -19,32 +20,20 @@ namespace Application.Services
 
         public async Task<PagedResult<MyEnrollmentItemDTO>> GetMyEnrollmentsAsync(int accountId, int page, int pageSize)
         {
-            page = page < 1 ? 1 : page;
-            pageSize = pageSize is <= 0 or > 100 ? 20 : pageSize;
-
             var query = _uow.EnrollmentRepository
                 .GetAllQueryable($"{nameof(Enrollment.Course)},{nameof(Enrollment.Progresses)}")
                 .Where(e => e.AccountId == accountId);
-
-            var total = await query.CountAsync();
-
-            var data = await query
-                .OrderByDescending(e => e.EnrollmentDate)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .Select(e => new MyEnrollmentItemDTO
-                {
-                    EnrollmentId = e.Id,
-                    CourseId = e.CourseId,
-                    CourseTitle = e.Course.Title,
-                    EnrollmentDate = e.EnrollmentDate,
-                    Status = e.Status,
-                    CompletedPercent = e.Progresses.OrderByDescending(p => p.ModifiedAt)
-                        .Select(p => (byte?)p.CompletedPercent).FirstOrDefault()
-                })
-                .ToListAsync();
-
-            return PagedResult<MyEnrollmentItemDTO>.Success(data, total, page, pageSize);
+            query = query.OrderByDescending(e => e.EnrollmentDate);
+            return await query.ToPagedResultAsync(page, pageSize, e => new MyEnrollmentItemDTO
+            {
+                EnrollmentId = e.Id,
+                CourseId = e.CourseId,
+                CourseTitle = e.Course.Title,
+                EnrollmentDate = e.EnrollmentDate,
+                Status = e.Status,
+                CompletedPercent = e.Progresses.OrderByDescending(p => p.ModifiedAt)
+                    .Select(p => (byte?)p.CompletedPercent).FirstOrDefault()
+            });
         }
 
         public async Task<Result<MyEnrollmentDetailDTO>> GetMyEnrollmentDetailAsync(int accountId, int enrollmentId)

@@ -1,6 +1,7 @@
 ﻿using Application.Services.Interfaces;
 using Application.ViewModels.Livestreams;
 using Application.Wrappers;
+using Application.Extensions;
 using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -21,9 +22,6 @@ namespace Application.Services
         public async Task<PagedResult<LivestreamAdminListItemDTO>> GetListAsync(
             int? courseId, string? q, DateTime? from, DateTime? to, string? sort, int page, int pageSize)
         {
-            page = page < 1 ? 1 : page;
-            pageSize = pageSize is <= 0 or > 100 ? 20 : pageSize;
-
             var query = _uow.LivestreamRepository.GetAllQueryable($"{nameof(Livestream.LivestreamRegistrations)}");
 
             if (courseId.HasValue) query = query.Where(x => x.CourseId == courseId.Value);
@@ -49,24 +47,16 @@ namespace Application.Services
                 _ => query.OrderByDescending(x => x.Schedule) // mặc định: sắp tới trước
             };
 
-            var total = await query.CountAsync();
-
-            var data = await query
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .Select(x => new LivestreamAdminListItemDTO
-                {
-                    Id = x.Id,
-                    CourseId = x.CourseId,
-                    TeacherId = x.TeacherId,
-                    Title = x.Title,
-                    Schedule = x.Schedule,
-                    Price = x.Price,
-                    RegistrationCount = x.LivestreamRegistrations.Count(r => !r.IsDeleted)
-                })
-                .ToListAsync();
-
-            return PagedResult<LivestreamAdminListItemDTO>.Success(data, total, page, pageSize);
+            return await query.ToPagedResultAsync(page, pageSize, x => new LivestreamAdminListItemDTO
+            {
+                Id = x.Id,
+                CourseId = x.CourseId,
+                TeacherId = x.TeacherId,
+                Title = x.Title,
+                Schedule = x.Schedule,
+                Price = x.Price,
+                RegistrationCount = x.LivestreamRegistrations.Count(r => !r.IsDeleted)
+            });
         }
 
         public async Task<Result<LivestreamAdminDetailDTO>> GetDetailAsync(int livestreamId)
@@ -161,9 +151,6 @@ namespace Application.Services
         public async Task<PagedResult<LivestreamRegistrationListItemDTO>> GetRegistrationsAsync(
             int livestreamId, string? paymentStatus, int page, int pageSize)
         {
-            page = page < 1 ? 1 : page;
-            pageSize = pageSize is <= 0 or > 100 ? 20 : pageSize;
-
             // ensure livestream exists
             var exists = await _uow.LivestreamRepository.GetAllQueryable().AnyAsync(x => x.Id == livestreamId);
             if (!exists)
@@ -182,22 +169,14 @@ namespace Application.Services
 
             query = query.OrderByDescending(r => r.RegisteredAt);
 
-            var total = await query.CountAsync();
-
-            var data = await query
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .Select(r => new LivestreamRegistrationListItemDTO
-                {
-                    RegistrationId = r.Id,
-                    AccountId = r.AccountId,
-                    AccountUserName = r.Account.UserName,
-                    PaymentStatus = r.PaymentStatus,
-                    RegisteredAt = r.RegisteredAt
-                })
-                .ToListAsync();
-
-            return PagedResult<LivestreamRegistrationListItemDTO>.Success(data, total, page, pageSize);
+            return await query.ToPagedResultAsync(page, pageSize, r => new LivestreamRegistrationListItemDTO
+            {
+                RegistrationId = r.Id,
+                AccountId = r.AccountId,
+                AccountUserName = r.Account.UserName,
+                PaymentStatus = r.PaymentStatus,
+                RegisteredAt = r.RegisteredAt
+            });
         }
 
         public async Task<Result<bool>> UpdateRegistrationPaymentStatusAsync(int registrationId, UpdateRegistrationPaymentStatusDTO dto)

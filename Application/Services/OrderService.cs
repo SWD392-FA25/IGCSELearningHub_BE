@@ -1,9 +1,11 @@
 ﻿using Application.Services.Interfaces;
 using Application.ViewModels.Orders;
 using Application.Wrappers;
+using Application.Extensions;
 using Domain.Entities;
 using Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using Application.Utils.Interfaces;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
@@ -16,11 +18,13 @@ namespace Application.Services
     public class OrderService : IOrderService
     {
         private readonly IUnitOfWork _uow;
+        private readonly IDateTimeProvider _clock;
         private readonly ILogger<OrderService> _logger;
 
-        public OrderService(IUnitOfWork uow, ILogger<OrderService> logger)
+        public OrderService(IUnitOfWork uow, IDateTimeProvider clock, ILogger<OrderService> logger)
         {
             _uow = uow;
+            _clock = clock;
             _logger = logger;
         }
 
@@ -74,7 +78,7 @@ namespace Application.Services
             var order = new Order
             {
                 AccountId = accountId,
-                OrderDate = DateTime.UtcNow,
+                OrderDate = _clock.UtcNow,
                 TotalAmount = total,
                 Status = OrderStatus.Pending
             };
@@ -105,26 +109,18 @@ namespace Application.Services
 
         public async Task<PagedResult<MyOrderListItemDTO>> GetMyOrdersAsync(int accountId, int page, int pageSize)
         {
-            page = page < 1 ? 1 : page;
-            pageSize = pageSize is <= 0 or > 100 ? 20 : pageSize;
-
             var q = _uow.OrderRepository.GetAllQueryable()
                 .Where(o => o.AccountId == accountId);
 
-            var total = await q.CountAsync();
-            var data = await q.OrderByDescending(o => o.OrderDate)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .Select(o => new MyOrderListItemDTO
-                {
-                    OrderId = o.Id,
-                    OrderDate = o.OrderDate,
-                    TotalAmount = o.TotalAmount,
-                    Status = o.Status.ToString(),
-                    Lines = o.OrderDetails.Count(x => !x.IsDeleted)
-                }).ToListAsync();
-
-            return PagedResult<MyOrderListItemDTO>.Success(data, total, page, pageSize);
+            q = q.OrderByDescending(o => o.OrderDate);
+            return await q.ToPagedResultAsync(page, pageSize, o => new MyOrderListItemDTO
+            {
+                OrderId = o.Id,
+                OrderDate = o.OrderDate,
+                TotalAmount = o.TotalAmount,
+                Status = o.Status.ToString(),
+                Lines = o.OrderDetails.Count(x => !x.IsDeleted)
+            });
         }
 
         // -------- helper --------

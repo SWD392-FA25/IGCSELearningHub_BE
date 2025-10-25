@@ -1,6 +1,8 @@
-﻿using Application.Services.Interfaces;
+using Application.Services.Interfaces;
+using Application.Utils.Interfaces;
 using Application.ViewModels.Progress;
 using Application.Wrappers;
+using Application.Extensions;
 using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -10,11 +12,13 @@ namespace Application.Services
     public class ProgressService : IProgressService
     {
         private readonly IUnitOfWork _uow;
+        private readonly IDateTimeProvider _clock;
         private readonly ILogger<ProgressService> _logger;
 
-        public ProgressService(IUnitOfWork uow, ILogger<ProgressService> logger)
+        public ProgressService(IUnitOfWork uow, IDateTimeProvider clock, ILogger<ProgressService> logger)
         {
             _uow = uow;
+            _clock = clock;
             _logger = logger;
         }
 
@@ -66,14 +70,14 @@ namespace Application.Services
                 {
                     EnrollmentId = enrollment.Id,
                     CompletedPercent = req.CompletedPercent,
-                    LastAccessDate = DateTime.UtcNow
+                    LastAccessDate = _clock.UtcNow
                 };
                 await _uow.ProgressRepository.AddAsync(progress);
             }
             else
             {
                 progress.CompletedPercent = req.CompletedPercent;
-                progress.LastAccessDate = DateTime.UtcNow;
+                progress.LastAccessDate = _clock.UtcNow;
                 _uow.ProgressRepository.Update(progress);
             }
 
@@ -97,21 +101,15 @@ namespace Application.Services
             var query = _uow.ProgressRepository.GetAllQueryable($"{nameof(Progress.Enrollment)},{nameof(Progress.Enrollment.Account)}")
                 .Where(p => p.Enrollment.CourseId == courseId && !p.IsDeleted);
 
-            var total = await query.CountAsync();
-            var data = await query.OrderByDescending(p => p.ModifiedAt)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .Select(p => new AdminProgressDTO
-                {
-                    AccountId = p.Enrollment.AccountId,
-                    StudentName = p.Enrollment.Account.FullName ?? p.Enrollment.Account.UserName,
-                    EnrollmentId = p.EnrollmentId,
-                    CompletedPercent = p.CompletedPercent,
-                    LastAccessDate = p.LastAccessDate
-                })
-                .ToListAsync();
-
-            return PagedResult<AdminProgressDTO>.Success(data, total, page, pageSize);
+            query = query.OrderByDescending(p => p.ModifiedAt);
+            return await query.ToPagedResultAsync(page, pageSize, p => new AdminProgressDTO
+            {
+                AccountId = p.Enrollment.AccountId,
+                StudentName = p.Enrollment.Account.FullName ?? p.Enrollment.Account.UserName,
+                EnrollmentId = p.EnrollmentId,
+                CompletedPercent = p.CompletedPercent,
+                LastAccessDate = p.LastAccessDate
+            });
         }
     }
 }

@@ -92,7 +92,7 @@ namespace WebAPI
                     options.SubstituteApiVersionInUrl = true;
                 });
 
-                builder.Services.AddInfrastructureServicesAsync(builder.Configuration);
+                builder.Services.AddInfrastructureServices(builder.Configuration);
                 builder.Services.AddPaymentServices(builder.Configuration);
 
                 builder.Services.AddEndpointsApiExplorer();
@@ -152,9 +152,9 @@ namespace WebAPI
 
                 app.UseMiddleware<CorrelationIdMiddleware>();
 
-                app.UseMiddleware<RequestResponseLoggingMiddleware>();
-
                 app.UseMiddleware<GlobalExceptionMiddleware>();
+
+                app.UseMiddleware<RequestResponseLoggingMiddleware>();
 
                 app.UseCors("FrontendOnly");
 

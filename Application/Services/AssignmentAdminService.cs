@@ -1,6 +1,7 @@
 ﻿using Application.Services.Interfaces;
 using Application.ViewModels.Assignments;
 using Application.Wrappers;
+using Application.Extensions;
 using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -20,9 +21,6 @@ namespace Application.Services
 
         public async Task<PagedResult<AssignmentAdminListItemDTO>> GetListAsync(int? courseId, string? q, int page, int pageSize, string? sort)
         {
-            page = page < 1 ? 1 : page;
-            pageSize = pageSize is <= 0 or > 100 ? 20 : pageSize;
-
             var query = _uow.AssignmentRepository.GetAllQueryable($"{nameof(Assignment.Submissions)}");
 
             if (courseId.HasValue) query = query.Where(a => a.CourseId == courseId.Value);
@@ -42,22 +40,14 @@ namespace Application.Services
                 _ => query.OrderByDescending(a => a.CreatedAt)
             };
 
-            var total = await query.CountAsync();
-
-            var data = await query
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .Select(a => new AssignmentAdminListItemDTO
-                {
-                    Id = a.Id,
-                    CourseId = a.CourseId,
-                    Title = a.Title,
-                    CreatedAt = a.CreatedAt,
-                    SubmissionCount = a.Submissions.Count(x => !x.IsDeleted)
-                })
-                .ToListAsync();
-
-            return PagedResult<AssignmentAdminListItemDTO>.Success(data, total, page, pageSize);
+            return await query.ToPagedResultAsync(page, pageSize, a => new AssignmentAdminListItemDTO
+            {
+                Id = a.Id,
+                CourseId = a.CourseId,
+                Title = a.Title,
+                CreatedAt = a.CreatedAt,
+                SubmissionCount = a.Submissions.Count(x => !x.IsDeleted)
+            });
         }
 
         public async Task<Result<AssignmentAdminDetailDTO>> GetDetailAsync(int assignmentId)
@@ -134,9 +124,6 @@ namespace Application.Services
 
         public async Task<PagedResult<SubmissionListItemDTO>> GetSubmissionsAsync(int assignmentId, int page, int pageSize)
         {
-            page = page < 1 ? 1 : page;
-            pageSize = pageSize is <= 0 or > 100 ? 20 : pageSize;
-
             // ensure assignment exists
             var exists = await _uow.AssignmentRepository.GetAllQueryable().AnyAsync(x => x.Id == assignmentId);
             if (!exists) return PagedResult<SubmissionListItemDTO>.Success(new List<SubmissionListItemDTO>(), 0, page, pageSize)
@@ -146,22 +133,14 @@ namespace Application.Services
                 .Where(s => s.AssignmentId == assignmentId)
                 .OrderByDescending(s => s.SubmittedDate);
 
-            var total = await query.CountAsync();
-
-            var data = await query
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .Select(s => new SubmissionListItemDTO
-                {
-                    SubmissionId = s.Id,
-                    AccountId = s.AccountId,
-                    AccountUserName = s.Account.UserName,
-                    Score = s.Score,
-                    SubmittedDate = s.SubmittedDate
-                })
-                .ToListAsync();
-
-            return PagedResult<SubmissionListItemDTO>.Success(data, total, page, pageSize);
+            return await query.ToPagedResultAsync(page, pageSize, s => new SubmissionListItemDTO
+            {
+                SubmissionId = s.Id,
+                AccountId = s.AccountId,
+                AccountUserName = s.Account.UserName,
+                Score = s.Score,
+                SubmittedDate = s.SubmittedDate
+            });
         }
 
         public async Task<Result<SubmissionDetailDTO>> GetSubmissionDetailAsync(int submissionId)

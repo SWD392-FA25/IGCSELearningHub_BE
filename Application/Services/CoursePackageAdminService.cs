@@ -1,6 +1,7 @@
 ﻿using Application.Services.Interfaces;
 using Application.ViewModels.Packages;
 using Application.Wrappers;
+using Application.Extensions;
 using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -25,9 +26,6 @@ namespace Application.Services
 
         public async Task<PagedResult<PackageAdminListItemDTO>> GetListAsync(string? q, string? sort, int page, int pageSize)
         {
-            page = page < 1 ? 1 : page;
-            pageSize = pageSize is <= 0 or > 100 ? 20 : pageSize;
-
             var query = _uow.CoursePackageRepository.GetAllQueryable($"{nameof(CoursePackage.Courses)}");
 
             if (!string.IsNullOrWhiteSpace(q))
@@ -48,22 +46,14 @@ namespace Application.Services
                 _ => query.OrderByDescending(p => p.CreatedAt)
             };
 
-            var total = await query.CountAsync();
-
-            var data = await query
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .Select(p => new PackageAdminListItemDTO
-                {
-                    Id = p.Id,
-                    Name = p.Name,
-                    Price = p.Price,
-                    CreatedAt = p.CreatedAt,
-                    CourseCount = p.Courses.Count(c => !c.IsDeleted)
-                })
-                .ToListAsync();
-
-            return PagedResult<PackageAdminListItemDTO>.Success(data, total, page, pageSize);
+            return await query.ToPagedResultAsync(page, pageSize, p => new PackageAdminListItemDTO
+            {
+                Id = p.Id,
+                Name = p.Name,
+                Price = p.Price,
+                CreatedAt = p.CreatedAt,
+                CourseCount = p.Courses.Count(c => !c.IsDeleted)
+            });
         }
 
         public async Task<Result<PackageAdminDetailDTO>> GetDetailAsync(int packageId)

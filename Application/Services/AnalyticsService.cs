@@ -1,34 +1,32 @@
-﻿using Application.DTOs.Analytics;
+using Application.DTOs.Analytics;
 using Application.Services.Interfaces;
 using Application.Wrappers;
+using Application.Utils.Interfaces;
 using Domain.Entities;
 using Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Application.Services
 {
     public class AnalyticsService : IAnalyticsService
     {
         private readonly IUnitOfWork _uow;
+        private readonly IDateTimeProvider _clock;
         private readonly ILogger<AnalyticsService> _logger;
 
-        public AnalyticsService(IUnitOfWork uow, ILogger<AnalyticsService> logger)
+        public AnalyticsService(IUnitOfWork uow, IDateTimeProvider clock, ILogger<AnalyticsService> logger)
         {
             _uow = uow;
+            _clock = clock;
             _logger = logger;
         }
 
         // ========= Helpers =========
 
-        private static (DateTime from, DateTime to) NormalizeRange(DateRangeQuery q)
+        private (DateTime from, DateTime to) NormalizeRange(DateRangeQuery q)
         {
-            var to = q.To?.ToUniversalTime() ?? DateTime.UtcNow;
+            var to = q.To?.ToUniversalTime() ?? _clock.UtcNow;
             var from = q.From?.ToUniversalTime() ?? to.AddDays(-30);
             if (from > to) (from, to) = (to, from);
             return (from, to);
@@ -36,17 +34,16 @@ namespace Application.Services
 
         private static IQueryable<T> Between<T>(IQueryable<T> q, Func<T, DateTime> selector, DateTime from, DateTime to)
         {
-            // Không dùng vì EF không translate Func. Chỉ là minh họa.
+            // Placeholder: keep server-side composed queries elsewhere
             return q;
         }
 
         private static IQueryable<TResult> GroupByPeriod<TSource, TResult>(
             IQueryable<TSource> source,
-            Func<TSource, DateTime> dateSelector, // Chỉ dùng ở client, ta sẽ viết lại version EF bên dưới.
+            Func<TSource, DateTime> dateSelector,
             GroupBy gb,
             Func<IQueryable<TSource>, IQueryable<TResult>> projector)
         {
-            // not used
             return projector(source);
         }
 
@@ -56,29 +53,24 @@ namespace Application.Services
         {
             var (from, to) = NormalizeRange(q);
 
-            // Orders Paid
             var ordersPaid = _uow.OrderRepository.GetAllQueryable($"{nameof(Order.Payments)}")
                 .Where(o => !o.IsDeleted && o.OrderDate >= from && o.OrderDate <= to && o.Status == OrderStatus.Paid);
 
             var revenue = await ordersPaid.SumAsync(o => (decimal?)o.TotalAmount) ?? 0m;
             var ordersCount = await ordersPaid.CountAsync();
 
-            // New users
             var newUsers = await _uow.AccountRepository.GetAllQueryable()
                 .Where(a => !a.IsDeleted && a.CreatedAt >= from && a.CreatedAt <= to)
                 .CountAsync();
 
-            // Enrollments
             var enrolls = await _uow.EnrollmentRepository.GetAllQueryable()
                 .Where(e => !e.IsDeleted && e.EnrollmentDate >= from && e.EnrollmentDate <= to)
                 .CountAsync();
 
-            // Livestream registrations (Paid) – nếu bạn muốn “tất cả” thì bỏ filter PaymentStatus
             var lrs = await _uow.LivestreamRegistrationRepository.GetAllQueryable()
                 .Where(r => !r.IsDeleted && r.RegisteredAt >= from && r.RegisteredAt <= to && r.PaymentStatus == "Paid")
                 .CountAsync();
 
-            // ARPU ~ revenue / distinct paid users
             var paidUserCount = await ordersPaid.Select(o => o.AccountId).Distinct().CountAsync();
             var arpu = paidUserCount > 0 ? revenue / paidUserCount : 0m;
 
@@ -182,7 +174,6 @@ namespace Application.Services
             var (from, to) = NormalizeRange(q);
             var gb = q.GroupBy;
 
-            // Revenue livestream = tổng OrderDetail.Price của item Livestream trong các Order đã Paid, theo OrderDate
             var paidOrders = _uow.OrderRepository.GetAllQueryable($"{nameof(Order.OrderDetails)}")
                 .Where(o => !o.IsDeleted && o.OrderDate >= from && o.OrderDate <= to && o.Status == OrderStatus.Paid);
 
@@ -198,10 +189,8 @@ namespace Application.Services
                          .Select(g => new TimePointDto { Year = g.Key.Year, Month = g.Key.Month, Day = null, Value = g.Sum(x => x.Price) });
 
             var points = await baseQuery.OrderBy(p => p.Year).ThenBy(p => p.Month).ThenBy(p => p.Day).ToListAsync();
-            return Result<RevenueSeriesDto>.Success(new RevenueSeriesDto { SeriesName = "Livestream Revenue", Points = points });
+            return Result<RevenueSeriesDto>.Success(new RevenueSeriesDto { Points = points });
         }
-
-        // ========= Top lists =========
 
         public async Task<PagedResult<TopCourseRevenueItemDto>> GetTopCoursesByRevenueAsync(DateRangeQuery q, int page, int pageSize)
         {
@@ -212,7 +201,6 @@ namespace Application.Services
             var paidOrders = _uow.OrderRepository.GetAllQueryable($"{nameof(Order.OrderDetails)}")
                 .Where(o => !o.IsDeleted && o.OrderDate >= from && o.OrderDate <= to && o.Status == OrderStatus.Paid);
 
-            // Revenue theo COURSE: cộng đơn giá của OrderDetail có ItemType.Course
             var details = paidOrders
                 .SelectMany(o => o.OrderDetails.Where(d => !d.IsDeleted && d.ItemType == ItemType.Course)
                                                .Select(d => new { d.ItemId, d.Price }));

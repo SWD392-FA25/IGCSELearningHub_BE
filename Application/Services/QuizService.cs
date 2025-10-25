@@ -1,6 +1,7 @@
 ﻿using Application.Services.Interfaces;
 using Application.ViewModels.Quiz;
 using Application.Wrappers;
+using Application.Extensions;
 using AutoMapper;
 using Domain.Entities;
 using Microsoft.Extensions.Logging;
@@ -27,22 +28,15 @@ namespace Application.Services
             var query = _uow.QuizRepository.GetAllQueryable();
             if (courseId.HasValue) query = query.Where(x => x.CourseId == courseId.Value);
 
-            var total = await query.CountAsync();
-            var items = await query
-                .OrderByDescending(x => x.CreatedAt)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .Select(x => new QuizSummaryDTO 
-                {
-                    Id = x.Id,
-                    CourseId = x.CourseId,
-                    Title = x.Title,
-                    TotalQuestions = x.TotalQuestions ?? 0,
-                    CreatedAt = x.CreatedAt
-                })
-                .ToListAsync();
-
-            return PagedResult<QuizSummaryDTO>.Success(items, total, page, pageSize);
+            query = query.OrderByDescending(x => x.CreatedAt);
+            return await query.ToPagedResultAsync(page, pageSize, x => new QuizSummaryDTO 
+            {
+                Id = x.Id,
+                CourseId = x.CourseId,
+                Title = x.Title,
+                TotalQuestions = x.TotalQuestions ?? 0,
+                CreatedAt = x.CreatedAt
+            });
         }
 
         public async Task<Result<QuizDetailDTO>> GetDetailAsync(int quizId)
