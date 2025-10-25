@@ -20,9 +20,7 @@ Configure via environment variables or user secrets (recommended for local dev).
 - `Authentication__Jwt__Secret` – strong secret for HMAC signing
 - `Authentication__Jwt__Issuer` – token issuer
 - `Authentication__Jwt__Audience` – token audience
-- `VnPay__vnp_TmnCode`, `VnPay__vnp_HashSecret`, `VnPay__vnp_BaseUrl`, `VnPay__vnp_ReturnUrl` – VNPay settings
-
-Note: The app also accepts a legacy section name `Vnpay` for VNPay settings.
+- `Vnpay__vnp_TmnCode`, `Vnpay__vnp_HashSecret`, `Vnpay__vnp_BaseUrl`, `Vnpay__vnp_ReturnUrl` – VNPay settings (section name: `Vnpay`)
 
 Example (PowerShell) using user-secrets from the `WebAPI` project folder:
 
@@ -31,10 +29,10 @@ dotnet user-secrets set "ConnectionStrings:IGCSELearningHub_DB" "Server=(local);
 dotnet user-secrets set "Authentication:Jwt:Secret" "<your-strong-secret>"
 dotnet user-secrets set "Authentication:Jwt:Issuer" "IGCSELearningHubApp"
 dotnet user-secrets set "Authentication:Jwt:Audience" "IGCSELearningHubUsers"
-dotnet user-secrets set "VnPay:vnp_TmnCode" "<tmn>"
-dotnet user-secrets set "VnPay:vnp_HashSecret" "<hash>"
-dotnet user-secrets set "VnPay:vnp_BaseUrl" "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
-dotnet user-secrets set "VnPay:vnp_ReturnUrl" "https://localhost:5001/api/v1/VnPay/callback"
+dotnet user-secrets set "Vnpay:vnp_TmnCode" "<tmn>"
+dotnet user-secrets set "Vnpay:vnp_HashSecret" "<hash>"
+dotnet user-secrets set "Vnpay:vnp_BaseUrl" "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
+dotnet user-secrets set "Vnpay:vnp_ReturnUrl" "https://localhost:5001/api/v1/VnPay/callback"
 ```
 
 ## Database
