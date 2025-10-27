@@ -10,7 +10,7 @@ namespace Domain.Enums
     {
         Student,
         Teacher,
-        Administrator,
+        Admin,
         Moderator
     }
 }
