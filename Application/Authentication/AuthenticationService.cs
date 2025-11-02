@@ -4,24 +4,26 @@ using Application.Wrappers;
 using AutoMapper;
 using Domain.Entities;
 using Microsoft.Extensions.Logging;
+using System.Security.Cryptography;
 
 namespace Application.Authentication
 {
     public class AuthenticationService : IAuthenticationService
     {
         private readonly IUnitOfWork _unitOfWork;
-        private readonly IJwtTokenService _jwtTokenService;
+        private readonly ITokenService _tokenService;
         private readonly ILogger<AuthenticationService> _logger;
         private readonly IMapper _mapper;
+        private const int RefreshTokenDays = 7;
 
         public AuthenticationService(
             IUnitOfWork unitOfWork,
-            IJwtTokenService jwtTokenService,
+            ITokenService tokenService,
             ILogger<AuthenticationService> logger,
             IMapper mapper)
         {
             _unitOfWork = unitOfWork;
-            _jwtTokenService = jwtTokenService;
+            _tokenService = tokenService;
             _logger = logger;
             _mapper = mapper;
         }
@@ -52,33 +54,8 @@ namespace Application.Authentication
                     await _unitOfWork.AccountRepository.AddAsync(account);
                     await _unitOfWork.SaveChangesAsync();
 
-                    var tokenResult = _jwtTokenService.GenerateJwtToken(
-                        account.Id,
-                        account.UserName,
-                        account.Role,
-                        account.Status
-                    );
-
-                    if (!tokenResult.Succeeded)
-                    {
-                        return Result<AuthenticatedUserDTO>.Fail(tokenResult.Message ?? "Failed to generate token.");
-                    }
-
                     await transaction.CommitAsync();
-
-                    var response = new AuthenticatedUserDTO
-                    {
-                        JWTToken = tokenResult.Data!,
-                        Id = account.Id,
-                        UserName = account.UserName,
-                        FullName = account.FullName,
-                        Email = account.Email,
-                        Role = account.Role.ToString(),
-                        Status = account.Status,
-                        IsExternal = account.IsExternal
-                    };
-
-                    return Result<AuthenticatedUserDTO>.Success(response);
+                    return await _tokenService.IssueAsync(account);
                 }
                 catch (Exception)
                 {
@@ -110,28 +87,11 @@ namespace Application.Authentication
                 return Result<AuthenticatedUserDTO>.Fail("Invalid credentials.");
             }
 
-            var tokenResult = _jwtTokenService.GenerateJwtToken(account.Id, account.UserName, account.Role, account.Status);
-
-            if (!tokenResult.Succeeded)
-            {
-                return Result<AuthenticatedUserDTO>.Fail(tokenResult.Message ?? "Failed to generate token.");
-            }
-
             _logger.LogInformation("User login successful for AccountId: {AccountId}", account.Id);
-
-            var response = new AuthenticatedUserDTO
-            {
-                JWTToken = tokenResult.Data!,
-                Id = account.Id,
-                UserName = account.UserName,
-                FullName = account.FullName,
-                Email = account.Email,
-                Role = account.Role.ToString(),
-                Status = account.Status,
-                IsExternal = account.IsExternal
-            };
-
-            return Result<AuthenticatedUserDTO>.Success(response);
+            return await _tokenService.IssueAsync(account);
         }
+
+        public async Task<Result<AuthenticatedUserDTO>> RefreshAsync(RefreshTokenRequestDTO request, string? ipAddress = null)
+            => await _tokenService.RefreshAsync(request.RefreshToken, ipAddress);
     }
 }

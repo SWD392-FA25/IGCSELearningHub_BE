@@ -29,6 +29,7 @@ namespace Application
         IPaymentMethodRepository PaymentMethodRepository { get; }
         IProgressRepository ProgressRepository { get; }
         ISubmissionRepository SubmissionRepository { get; }
+        IRefreshTokenRepository RefreshTokenRepository { get; }
         
 
         public Task<int> SaveChangesAsync();

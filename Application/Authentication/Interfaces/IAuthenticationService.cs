@@ -12,5 +12,6 @@ namespace Application.Authentication.Interfaces
     {
         Task<Result<AuthenticatedUserDTO>> RegisterAsync(AccountRegistrationDTO registrationDto);
         Task<Result<AuthenticatedUserDTO>> LoginAsync(AccountLoginDTO loginDto);
+        Task<Result<AuthenticatedUserDTO>> RefreshAsync(RefreshTokenRequestDTO request, string? ipAddress = null);
     }
 }

@@ -8,7 +8,8 @@ namespace Application.DTOs.Authentication
 {
     public class AuthenticatedUserDTO
     {
-        public string JWTToken { get; set; } = string.Empty;
+        public string AccessToken { get; set; } = string.Empty;
+        public string RefreshToken { get; set; } = string.Empty;
         public int Id { get; set; }
         public string UserName { get; set; }
         public string FullName { get; set; }
