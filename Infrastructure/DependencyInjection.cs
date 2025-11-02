@@ -42,11 +42,14 @@ namespace Infrastructure
             services.AddScoped<IPaymentMethodRepository, PaymentMethodRepository>();
             services.AddScoped<IProgressRepository, ProgressRepository>();
             services.AddScoped<ISubmissionRepository, SubmissionRepository>();
+            services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
             #endregion
 
             #region service config
             services.AddScoped<IAuthenticationService, AuthenticationService>();
-            services.AddScoped<IJwtTokenService, JwtTokenService>();
+            services.AddScoped<IAccessTokenFactory, AccessTokenFactory>();
+            services.AddScoped<IRefreshTokenManager, RefreshTokenManager>();
+            services.AddScoped<ITokenService, TokenService>();
             services.AddScoped<IDateTimeProvider, DateTimeProvider>();
             services.AddScoped<IAccountService, AccountService>();
             services.AddScoped<IQuizService, QuizService>();
@@ -63,6 +66,8 @@ namespace Infrastructure
             services.AddScoped<IOrderQueryService, OrderQueryService>();
             services.AddScoped<IProgressService, ProgressService>();
             services.AddScoped<IAnalyticsService, AnalyticsService>();
+            services.AddScoped<ILivestreamPublicService, LivestreamPublicService>();
+            services.AddScoped<ICoursePackagePublicService, CoursePackagePublicService>();
             #endregion
 
             #region quartz config

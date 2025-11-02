@@ -1,10 +1,7 @@
 ﻿using Application.Services.Interfaces;
-
 using Application.Wrappers;
 using Application.Extensions;
 using AutoMapper;
-using Domain.Entities;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Application.DTOs.Accounts;
 

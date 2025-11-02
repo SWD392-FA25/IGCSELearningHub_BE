@@ -44,6 +44,14 @@ dotnet ef database update
 
 If running EF Core tools from the `Infrastructure` project, ensure the connection string is provided via env var `ConnectionStrings__IGCSELearningHub_DB`.
 
+Design-time connection resolution uses the current working directory. Either:
+- Set env var in the same terminal: `$env:ConnectionStrings__IGCSELearningHub_DB = '<your-connection>'`
+- Or run EF from `WebAPI/` so it reads `WebAPI/appsettings.json`.
+
+Common commands (PowerShell):
+- Add migration: `dotnet ef migrations add <Name> --project Infrastructure --context AppDbContext --output-dir Migrations`
+- Update DB: `dotnet ef database update --project Infrastructure --context AppDbContext`
+
 ## Run
 From `WebAPI`:
 
@@ -52,6 +60,33 @@ dotnet run
 ```
 
 Browse Swagger UI at `/swagger`.
+
+## Authentication
+- Access token: short‑lived JWT (default 15 minutes), returned as `accessToken`.
+- Refresh token: long‑lived, persisted in DB, returned as `refreshToken` and rotated on refresh.
+
+Endpoints
+- `POST /api/v1/Authentication/register` – returns `{ accessToken, refreshToken, ... }`
+- `POST /api/v1/Authentication/login` – returns `{ accessToken, refreshToken, ... }`
+- `POST /api/v1/Authentication/refresh` – body `{ refreshToken }`, returns new `{ accessToken, refreshToken }`
+- `POST /api/v1/Authentication/revoke` – body `{ refreshToken, reason? }`, revokes one session
+- `POST /api/v1/Authentication/revoke-all` – body `{ reason? }`, revokes all sessions for current user
+
+Client flow
+- Use `Authorization: Bearer <accessToken>` on API calls.
+- When 401/expired, call `refresh` and replace both tokens.
+
+## Public Discovery APIs
+- Livestreams
+  - `GET /api/v1/livestreams?courseId=&from=&to=&sort=&pageNumber=&pageSize=` – list upcoming
+  - `GET /api/v1/livestreams/{id}` – detail
+- Packages
+  - `GET /api/v1/packages?q=&sort=&pageNumber=&pageSize=` – list
+  - `GET /api/v1/packages/{id}` – detail
+
+## Payments (VNPay)
+- ReturnUrl (versioned, lowercase): `https://<host>/api/v1/vnpay/callback`
+- Callback handling is idempotent; repeated callbacks will not duplicate payments.
 
 ## Notes
 - CORS is currently wide open for all origins; restrict it for production.

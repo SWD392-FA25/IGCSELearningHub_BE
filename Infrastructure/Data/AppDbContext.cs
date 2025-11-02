@@ -54,6 +54,8 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<Account> Accounts { get; set; }
 
+    public virtual DbSet<RefreshToken> RefreshTokens { get; set; }
+
     protected override void ConfigureConventions(ModelConfigurationBuilder builder)
     {
         builder.Properties<decimal>().HavePrecision(18, 2);
@@ -224,6 +226,13 @@ public partial class AppDbContext : DbContext
             .HasOne(p => p.PaymentMethod)
             .WithMany(pm => pm.Payments)
             .HasForeignKey(p => p.PaymentMethodId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // RefreshTokens -> Accounts: cascade
+        modelBuilder.Entity<RefreshToken>()
+            .HasOne(rt => rt.Account)
+            .WithMany() // optional: add navigation collection on Account if needed
+            .HasForeignKey(rt => rt.AccountId)
             .OnDelete(DeleteBehavior.Cascade);
 
         // ==== Precision đặc thù (nếu muốn khác 18,2) ====

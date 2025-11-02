@@ -11,13 +11,13 @@ using System.Text;
 
 namespace Application.Authentication
 {
-    public class JwtTokenService : IJwtTokenService
+    public class AccessTokenFactory : IAccessTokenFactory
     {
         private readonly IConfiguration _configuration;
         private readonly IDateTimeProvider _dateTimeProvider;
-        private readonly ILogger<JwtTokenService> _logger;
+        private readonly ILogger<AccessTokenFactory> _logger;
 
-        public JwtTokenService(IConfiguration configuration, IDateTimeProvider dateTimeProvider, ILogger<JwtTokenService> logger)
+        public AccessTokenFactory(IConfiguration configuration, IDateTimeProvider dateTimeProvider, ILogger<AccessTokenFactory> logger)
         {
             _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
             _dateTimeProvider = dateTimeProvider ?? throw new ArgumentNullException(nameof(dateTimeProvider));
@@ -61,7 +61,7 @@ namespace Application.Authentication
                 issuer: issuer,
                 audience: audience,
                 claims: claims,
-                expires: _dateTimeProvider.UtcNow.AddHours(1), // Token valid for 1 hour
+                expires: _dateTimeProvider.UtcNow.AddMinutes(30), 
                 signingCredentials: creds
             );
 
@@ -69,5 +69,8 @@ namespace Application.Authentication
 
             return Result<string>.Success(new JwtSecurityTokenHandler().WriteToken(token));
         }
+
+        public Result<string> GenerateAccessToken(int accountId, string accountUserName, AccountRole role, string? accountStatus)
+            => GenerateJwtToken(accountId, accountUserName, role, accountStatus);
     }
 }
