@@ -1,5 +1,6 @@
 ﻿using Application;
 using Application.Payments.DTOs;
+using Application.Payments.Helpers;
 using Application.Payments.Interfaces;
 using Application.Services.Interfaces;
 using Domain.Entities;
@@ -59,7 +60,7 @@ namespace Infrastructure.Payments.Providers
             }
             catch { /* fallback sang command.ClientIp */ }
 
-            var vnGateway = _gateway as VnPayGateway
+            var vnGateway = _gateway as VnPayPaymentGateway
                 ?? throw new InvalidOperationException("VNPay gateway required.");
 
             var checkout = await vnGateway.CreateCheckoutUrlInternalAsync(
@@ -162,19 +163,21 @@ namespace Infrastructure.Payments.Providers
 
         private async Task<PaymentMethod> EnsureVnPayMethodAsync(CancellationToken ct)
         {
-            var pm = await _uow.PaymentMethodRepository.FindOneAsync(p => p.PaymentMethodName == "VNPay");
-            if (pm is null)
+            ct.ThrowIfCancellationRequested();
+
+            var method = await PaymentMethodUtilities.EnsureMethodAsync(
+                _uow,
+                PaymentMethodUtilities.VnPayMethodName,
+                "VNPay payment gateway",
+                true,
+                _logger);
+
+            if (!method.IsActive)
             {
-                pm = new PaymentMethod
-                {
-                    PaymentMethodName = "VNPay",
-                    PaymentMethodDescription = "VNPay payment gateway",
-                    IsActive = true
-                };
-                await _uow.PaymentMethodRepository.AddAsync(pm);
-                await _uow.SaveChangesAsync();
+                throw new InvalidOperationException("VNPay payment method is currently inactive.");
             }
-            return pm;
+
+            return method;
         }
     }
 }
