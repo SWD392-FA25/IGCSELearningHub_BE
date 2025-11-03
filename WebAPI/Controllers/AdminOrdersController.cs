@@ -13,7 +13,7 @@ namespace WebAPI.Controllers
     [ApiController]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/admin/orders")]
-    [Authorize(Roles = "Admin,Teacher")]
+    [Authorize]
     public sealed class AdminOrdersController : ControllerBase
     {
         private readonly IEnrollmentAdminService _enrollmentAdminService;
