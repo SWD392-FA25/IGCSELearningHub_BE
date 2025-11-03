@@ -1,4 +1,5 @@
 ﻿using Application.Payments.Interfaces;
+using Application.Payments.Services;
 using Infrastructure.Payments.Options;
 using Infrastructure.Payments.Providers;
 using Infrastructure.Payments.Providers.VnPay;
@@ -15,8 +16,9 @@ namespace Infrastructure
             services.Configure<VnPayOptions>(section);
             services.AddHttpContextAccessor();
 
-            services.AddScoped<IPaymentGateway, VnPayGateway>();
+            services.AddScoped<IPaymentGateway, VnPayPaymentGateway>();
             services.AddScoped<IPaymentOrchestrator, PaymentOrchestrator>();
+            services.AddScoped<ICashPaymentService, CashPaymentService>();
 
             return services;
         }

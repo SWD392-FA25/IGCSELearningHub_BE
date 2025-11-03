@@ -1,6 +1,8 @@
 ﻿using Application;
 using Application.Authentication;
 using Application.Authentication.Interfaces;
+using Application.Payments.Interfaces;
+using Application.Payments.Services;
 using Application.IRepository;
 using Application.Services;
 using Application.Services.Interfaces;
@@ -68,6 +70,7 @@ namespace Infrastructure
             services.AddScoped<IAnalyticsService, AnalyticsService>();
             services.AddScoped<ILivestreamPublicService, LivestreamPublicService>();
             services.AddScoped<ICoursePackagePublicService, CoursePackagePublicService>();
+            services.AddScoped<IPaymentMethodService, PaymentMethodService>();
             #endregion
 
             #region quartz config

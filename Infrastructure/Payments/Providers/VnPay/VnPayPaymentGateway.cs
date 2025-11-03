@@ -8,11 +8,11 @@ using System.Text;
 
 namespace Infrastructure.Payments.Providers.VnPay
 {
-    public sealed class VnPayGateway : IPaymentGateway
+    public sealed class VnPayPaymentGateway : IPaymentGateway
     {
         private readonly VnPayOptions _opt;
 
-        public VnPayGateway(IOptions<VnPayOptions> opt)
+        public VnPayPaymentGateway(IOptions<VnPayOptions> opt)
         {
             _opt = opt.Value;
         }
