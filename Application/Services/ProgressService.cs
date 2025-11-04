@@ -66,7 +66,7 @@ namespace Application.Services
             var progress = enrollment.Progresses.FirstOrDefault();
             if (progress == null)
             {
-                progress = new Domain.Entities.Progress
+                progress = new Progress
                 {
                     EnrollmentId = enrollment.Id,
                     CompletedPercent = req.CompletedPercent,

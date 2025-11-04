@@ -36,6 +36,8 @@ namespace Infrastructure
             services.AddScoped<IQuizRepository, QuizRepository>();
             services.AddScoped<IQuizQuestionRepository, QuizQuestionRepository>();
             services.AddScoped<IQuizAttemptRepository, QuizAttemptRepository>();
+            services.AddScoped<ILessonRepository, LessonRepository>();
+            services.AddScoped<ILessonCompletionRepository, LessonCompletionRepository>();
             services.AddScoped<ILivestreamRegistrationRepository, LivestreamRegistrationRepository>();
             services.AddScoped<ILivestreamRepository, LivestreamRepository>();
             services.AddScoped<IOrderDetailRepository, OrderDetailRepository>();
@@ -62,7 +64,9 @@ namespace Infrastructure
             services.AddScoped<ILivestreamAdminService, LivestreamAdminService>();
             services.AddScoped<ICoursePackageAdminService, CoursePackageAdminService>();
             services.AddScoped<IEnrollmentAdminService, EnrollmentAdminService>();
+            services.AddScoped<ILessonAdminService, LessonAdminService>();
             services.AddScoped<IEnrollmentStudentService, EnrollmentStudentService>();
+            services.AddScoped<ILessonStudentService, LessonStudentService>();
             services.AddScoped<IStudentSubmissionService, StudentSubmissionService>();
             services.AddScoped<IOrderService, OrderService>();
             services.AddScoped<IOrderQueryService, OrderQueryService>();
@@ -70,6 +74,7 @@ namespace Infrastructure
             services.AddScoped<IAnalyticsService, AnalyticsService>();
             services.AddScoped<ILivestreamPublicService, LivestreamPublicService>();
             services.AddScoped<ICoursePackagePublicService, CoursePackagePublicService>();
+            services.AddScoped<ILessonPublicService, LessonPublicService>();
             services.AddScoped<IPaymentMethodService, PaymentMethodService>();
             #endregion
 

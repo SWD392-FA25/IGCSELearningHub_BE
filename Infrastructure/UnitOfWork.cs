@@ -20,6 +20,8 @@ namespace Infrastructure
         public readonly IQuizRepository _quizRepository;
         public readonly IQuizQuestionRepository _quizQuestionRepository;
         public readonly IQuizAttemptRepository _quizAttemptRepository;
+        public readonly ILessonRepository _lessonRepository;
+        public readonly ILessonCompletionRepository _lessonCompletionRepository;
         public readonly ILivestreamRegistrationRepository _livestreamRegistrationRepository;
         public readonly ILivestreamRepository _livestreamRepository;
         public readonly IOrderDetailRepository _orderDetailRepository;
@@ -41,6 +43,8 @@ namespace Infrastructure
         public IQuizRepository QuizRepository => _quizRepository;   
         public IQuizQuestionRepository QuizQuestionRepository => _quizQuestionRepository;
         public IQuizAttemptRepository QuizAttemptRepository => _quizAttemptRepository;
+        public ILessonRepository LessonRepository => _lessonRepository;
+        public ILessonCompletionRepository LessonCompletionRepository => _lessonCompletionRepository;
         public ILivestreamRegistrationRepository LivestreamRegistrationRepository => _livestreamRegistrationRepository;
         public ILivestreamRepository LivestreamRepository => _livestreamRepository;
         public IOrderDetailRepository OrderDetailRepository => _orderDetailRepository;
@@ -63,6 +67,8 @@ namespace Infrastructure
             IQuizRepository quizRepository,
             IQuizQuestionRepository quizQuestionRepository,
             IQuizAttemptRepository quizAttemptRepository,
+            ILessonRepository lessonRepository,
+            ILessonCompletionRepository lessonCompletionRepository,
             ILivestreamRegistrationRepository livestreamRegistrationRepository,
             ILivestreamRepository livestreamRepository,
             IOrderDetailRepository orderDetailRepository,
@@ -86,6 +92,8 @@ namespace Infrastructure
             _quizRepository = quizRepository;
             _quizQuestionRepository = quizQuestionRepository;
             _quizAttemptRepository = quizAttemptRepository;
+            _lessonRepository = lessonRepository;
+            _lessonCompletionRepository = lessonCompletionRepository;
             _livestreamRegistrationRepository = livestreamRegistrationRepository;
             _livestreamRepository = livestreamRepository;
             _orderDetailRepository = orderDetailRepository;

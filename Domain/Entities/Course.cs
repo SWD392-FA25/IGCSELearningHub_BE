@@ -23,4 +23,6 @@ public partial class Course : BaseFullEntity
     public virtual ICollection<Quiz> Quizzes { get; set; } = new List<Quiz>();
 
     public virtual ICollection<CoursePackage> Packages { get; set; } = new List<CoursePackage>();
+
+    public virtual ICollection<Lesson> Lessons { get; set; } = new List<Lesson>();
 }

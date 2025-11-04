@@ -38,6 +38,10 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<PaymentMethod> PaymentMethods { get; set; }
 
+    public virtual DbSet<Lesson> Lessons { get; set; }
+
+    public virtual DbSet<LessonCompletion> LessonCompletions { get; set; }
+
     public virtual DbSet<Progress> Progresses { get; set; }
 
     public virtual DbSet<Question> Questions { get; set; }
@@ -121,6 +125,36 @@ public partial class AppDbContext : DbContext
             .WithMany(c => c.Assignments)
             .HasForeignKey(a => a.CourseId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // Lessons -> Courses: cascade, ordered by OrderIndex when querying
+        modelBuilder.Entity<Lesson>()
+            .HasOne(l => l.Course)
+            .WithMany(c => c.Lessons)
+            .HasForeignKey(l => l.CourseId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Lesson>()
+            .Property(l => l.Title)
+            .IsRequired();
+
+        // LessonCompletions -> Enrollment/Lesson
+        modelBuilder.Entity<LessonCompletion>()
+            .HasOne(lc => lc.Enrollment)
+            .WithMany()
+            .HasForeignKey(lc => lc.EnrollmentId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Avoid multiple cascade paths from Course -> (Lessons, Enrollments) -> LessonCompletions
+        // Keep cascade via Enrollment; restrict via Lesson
+        modelBuilder.Entity<LessonCompletion>()
+            .HasOne(lc => lc.Lesson)
+            .WithMany()
+            .HasForeignKey(lc => lc.LessonId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<LessonCompletion>()
+            .HasIndex(lc => new { lc.EnrollmentId, lc.LessonId })
+            .IsUnique();
 
         // Submissions -> Assignment/Account: cascade
         modelBuilder.Entity<Submission>()

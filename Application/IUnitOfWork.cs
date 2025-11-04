@@ -21,6 +21,8 @@ namespace Application
         IQuizRepository QuizRepository { get; }
         IQuizQuestionRepository QuizQuestionRepository { get; }
         IQuizAttemptRepository QuizAttemptRepository { get; }
+        ILessonRepository LessonRepository { get; }
+        ILessonCompletionRepository LessonCompletionRepository { get; }
         ILivestreamRegistrationRepository LivestreamRegistrationRepository  { get; }
         ILivestreamRepository LivestreamRepository { get; }
         IOrderDetailRepository OrderDetailRepository { get; }
