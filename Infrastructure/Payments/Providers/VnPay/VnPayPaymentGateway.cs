@@ -53,7 +53,6 @@ namespace Infrastructure.Payments.Providers.VnPay
             vnp.AddRequestData("vnp_ReturnUrl", _opt.vnp_ReturnUrl);
             vnp.AddRequestData("vnp_TxnRef", txnRef);
 
-            // BankCode tùy chọn; nếu rỗng hoặc không thuộc danh sách hợp lệ thì KHÔNG gửi sang VNPay
             if (!string.IsNullOrWhiteSpace(bankCode))
             {
                 var code = bankCode.Trim().ToUpperInvariant();
