@@ -116,6 +116,7 @@ namespace Infrastructure.Payments.Providers
                 if (pendingPayment != null)
                 {
                     pendingPayment.Status = PaymentStatus.Canceled;
+                    _uow.PaymentRepository.Update(pendingPayment);
                     await _uow.SaveChangesAsync();
                 }
                 else
@@ -142,6 +143,7 @@ namespace Infrastructure.Payments.Providers
 
             payment.Status = PaymentStatus.Paid;
             payment.PaidDate = DateTime.UtcNow;
+            _uow.PaymentRepository.Update(payment);
             order.Status = OrderStatus.Paid;
             // Important: OrderRepository.GetByIdAsync returns AsNoTracking()
             // so we must explicitly mark the entity as modified for EF to persist the change.
