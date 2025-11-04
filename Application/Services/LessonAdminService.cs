@@ -23,12 +23,22 @@ namespace Application.Services
             var course = await _uow.CourseRepository.GetByIdAsync(courseId);
             if (course == null) return Result<int>.Fail("Course not found.", 404);
 
-            var nextOrder = await _uow.LessonRepository
+            // Compute next order index using a translation-friendly pattern for EF Core
+            var q = _uow.LessonRepository
                 .GetAllQueryable()
-                .Where(l => l.CourseId == courseId)
-                .Select(l => (int?)l.OrderIndex)
-                .DefaultIfEmpty(0)
-                .MaxAsync() ?? 0;
+                .Where(l => l.CourseId == courseId);
+
+            int nextOrder;
+            var any = await q.AnyAsync();
+            if (any)
+            {
+                var currentMax = await q.MaxAsync(l => l.OrderIndex);
+                nextOrder = currentMax + 1;
+            }
+            else
+            {
+                nextOrder = 1;
+            }
 
             var lesson = new Lesson
             {
@@ -38,7 +48,7 @@ namespace Application.Services
                 VideoUrl = dto.VideoUrl,
                 AttachmentUrl = dto.AttachmentUrl,
                 IsFreePreview = dto.IsFreePreview ?? false,
-                OrderIndex = nextOrder + 1
+                OrderIndex = nextOrder
             };
 
             await _uow.LessonRepository.AddAsync(lesson);
@@ -92,4 +102,3 @@ namespace Application.Services
         }
     }
 }
-
