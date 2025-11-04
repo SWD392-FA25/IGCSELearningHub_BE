@@ -88,7 +88,6 @@ namespace Infrastructure.Payments.Providers
                 return result;
             }
 
-            // Idempotency: if this order already paid, do not create/update more payments
             var alreadyPaid = await _uow.PaymentRepository
                 .GetAllQueryable()
                 .AnyAsync(p => p.OrderId == order.Id && p.Status == PaymentStatus.Paid, ct)
@@ -103,7 +102,6 @@ namespace Infrastructure.Payments.Providers
                 return result;
             }
 
-            // Find latest pending payment for this order
             var pendingPayment = await _uow.PaymentRepository
                 .GetAllQueryable()
                 .Where(p => p.OrderId == order.Id && p.Status == PaymentStatus.Pending && !p.IsDeleted)

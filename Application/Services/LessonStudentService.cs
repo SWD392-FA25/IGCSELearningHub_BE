@@ -23,6 +23,13 @@ namespace Application.Services
             var enrolled = await EnsureEnrolled(accountId, courseId);
             if (!enrolled) return Result<IEnumerable<LessonDetailDTO>>.Fail("Enrollment required.", 403);
 
+            var enrollment = await _uow.EnrollmentRepository.GetAllQueryable()
+                .FirstOrDefaultAsync(e => e.AccountId == accountId && e.CourseId == courseId && !e.IsDeleted && e.Status != EnrollmentStatus.Canceled);
+            if (enrollment == null) return Result<IEnumerable<LessonDetailDTO>>.Fail("Enrollment required.", 403);
+
+            var lc = _uow.LessonCompletionRepository.GetAllQueryable()
+                .Where(x => x.EnrollmentId == enrollment.Id);
+
             var items = await _uow.LessonRepository.GetAllQueryable()
                 .Where(l => l.CourseId == courseId)
                 .OrderBy(l => l.OrderIndex)
@@ -35,7 +42,8 @@ namespace Application.Services
                     VideoUrl = l.VideoUrl,
                     AttachmentUrl = l.AttachmentUrl,
                     OrderIndex = l.OrderIndex,
-                    IsFreePreview = l.IsFreePreview
+                    IsFreePreview = l.IsFreePreview,
+                    Completed = lc.Any(c => c.LessonId == l.Id)
                 })
                 .ToListAsync();
 
@@ -44,12 +52,16 @@ namespace Application.Services
 
         public async Task<Result<LessonDetailDTO>> GetMyLessonDetailAsync(int accountId, int courseId, int lessonId)
         {
-            var enrolled = await EnsureEnrolled(accountId, courseId);
-            if (!enrolled) return Result<LessonDetailDTO>.Fail("Enrollment required.", 403);
+            var enrollment = await _uow.EnrollmentRepository.GetAllQueryable()
+                .FirstOrDefaultAsync(e => e.AccountId == accountId && e.CourseId == courseId && !e.IsDeleted && e.Status != EnrollmentStatus.Canceled);
+            if (enrollment == null) return Result<LessonDetailDTO>.Fail("Enrollment required.", 403);
 
             var l = await _uow.LessonRepository.GetAllQueryable()
                 .FirstOrDefaultAsync(x => x.Id == lessonId && x.CourseId == courseId);
             if (l == null) return Result<LessonDetailDTO>.Fail("Lesson not found.", 404);
+
+            var completed = await _uow.LessonCompletionRepository.GetAllQueryable()
+                .AnyAsync(c => c.LessonId == lessonId && c.EnrollmentId == enrollment.Id);
 
             var dto = new LessonDetailDTO
             {
@@ -60,7 +72,8 @@ namespace Application.Services
                 VideoUrl = l.VideoUrl,
                 AttachmentUrl = l.AttachmentUrl,
                 OrderIndex = l.OrderIndex,
-                IsFreePreview = l.IsFreePreview
+                IsFreePreview = l.IsFreePreview,
+                Completed = completed
             };
             return Result<LessonDetailDTO>.Success(dto);
         }
@@ -115,4 +128,3 @@ namespace Application.Services
         }
     }
 }
-
