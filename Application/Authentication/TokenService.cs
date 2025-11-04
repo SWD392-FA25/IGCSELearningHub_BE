@@ -9,11 +9,13 @@ namespace Application.Authentication
     {
         private readonly IAccessTokenFactory _access;
         private readonly IRefreshTokenManager _refresh;
+        private readonly IUnitOfWork _uow; // to load account info during refresh
 
-        public TokenService(IAccessTokenFactory access, IRefreshTokenManager refresh)
+        public TokenService(IAccessTokenFactory access, IRefreshTokenManager refresh, IUnitOfWork uow)
         {
             _access = access;
             _refresh = refresh;
+            _uow = uow;
         }
 
         public async Task<Result<AuthenticatedUserDTO>> IssueAsync(Account account, string? ipAddress = null)
@@ -41,31 +43,33 @@ namespace Application.Authentication
         public async Task<Result<AuthenticatedUserDTO>> RefreshAsync(string refreshToken, string? ipAddress = null)
         {
             var (ok, token, error) = await _refresh.ValidateActiveAsync(refreshToken);
-            if (!ok || token == null) return Result<AuthenticatedUserDTO>.Fail(error ?? "Invalid refresh token.", 401);
+            if (!ok || token == null)
+                return Result<AuthenticatedUserDTO>.Fail(error ?? "Invalid refresh token.", 401);
 
-            var newRtResult = await _refresh.RotateAsync(refreshToken, ipAddress);
-            if (!newRtResult.Ok || newRtResult.NewToken == null)
-                return Result<AuthenticatedUserDTO>.Fail(newRtResult.Error ?? "Unable to rotate refresh token.", 401);
+            // Load actual account to preserve real username/role/status in the new access token
+            var account = await _uow.AccountRepository.GetByIdAsync(token.AccountId);
+            if (account == null)
+                return Result<AuthenticatedUserDTO>.Fail("Account not found for this token.", 401);
 
-            // fetch account minimal: rely on token.Account; assume upstream will load if needed
-            var acc = new Account { Id = token.AccountId, UserName = string.Empty, Role = 0, Status = null };
-            // Note: For full details (email/name), the caller should fetch the account and use IssueAsync.
-            // Here we only guarantee tokens.
+            var rotate = await _refresh.RotateAsync(refreshToken, ipAddress);
+            if (!rotate.Ok || rotate.NewToken == null)
+                return Result<AuthenticatedUserDTO>.Fail(rotate.Error ?? "Unable to rotate refresh token.", 401);
 
-            var access = _access.GenerateAccessToken(token.AccountId, acc.UserName, acc.Role, acc.Status);
-            if (!access.Succeeded) return Result<AuthenticatedUserDTO>.Fail(access.Message ?? "Failed to create access token.");
+            var access = _access.GenerateAccessToken(account.Id, account.UserName, account.Role, account.Status);
+            if (!access.Succeeded)
+                return Result<AuthenticatedUserDTO>.Fail(access.Message ?? "Failed to create access token.");
 
             var dto = new AuthenticatedUserDTO
             {
                 AccessToken = access.Data!,
-                RefreshToken = newRtResult.NewToken.Token,
-                Id = token.AccountId,
-                UserName = acc.UserName,
-                FullName = string.Empty,
-                Email = string.Empty,
-                Role = acc.Role.ToString(),
-                Status = acc.Status ?? string.Empty,
-                IsExternal = false
+                RefreshToken = rotate.NewToken.Token,
+                Id = account.Id,
+                UserName = account.UserName,
+                FullName = account.FullName ?? string.Empty,
+                Email = account.Email,
+                Role = account.Role.ToString(),
+                Status = account.Status ?? string.Empty,
+                IsExternal = account.IsExternal
             };
             return Result<AuthenticatedUserDTO>.Success(dto);
         }
@@ -77,4 +81,3 @@ namespace Application.Authentication
             => await _refresh.RevokeAllForAccountAsync(accountId, reason, ipAddress);
     }
 }
-
