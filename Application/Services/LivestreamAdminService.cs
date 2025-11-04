@@ -86,8 +86,7 @@ namespace Application.Services
                 return Result<int>.Fail("Title is required.", 400);
             if (dto.Price < 0)
                 return Result<int>.Fail("Price must be >= 0.", 400);
-
-            // validate Course & Teacher tồn tại
+            
             var course = await _uow.CourseRepository.GetByIdAsync(dto.CourseId);
             if (course == null) return Result<int>.Fail("Course not found.", 404);
 
@@ -151,7 +150,6 @@ namespace Application.Services
         public async Task<PagedResult<LivestreamRegistrationListItemDTO>> GetRegistrationsAsync(
             int livestreamId, string? paymentStatus, int page, int pageSize)
         {
-            // ensure livestream exists
             var exists = await _uow.LivestreamRepository.GetAllQueryable().AnyAsync(x => x.Id == livestreamId);
             if (!exists)
                 return PagedResult<LivestreamRegistrationListItemDTO>.Success(new List<LivestreamRegistrationListItemDTO>(), 0, page, pageSize)
