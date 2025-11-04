@@ -11,6 +11,12 @@ namespace Infrastructure.Payments.Providers.VnPay
     public sealed class VnPayPaymentGateway : IPaymentGateway
     {
         private readonly VnPayOptions _opt;
+        private static readonly HashSet<string> AllowedBankCodes = new(StringComparer.OrdinalIgnoreCase)
+        {
+            // Chỉ chấp nhận các loại phương thức theo tài liệu VNPay
+            // vnp_BankCode=VNPAYQR (QR), VNBANK (ATM nội địa), INTCARD (Thẻ quốc tế)
+            "VNPAYQR", "VNBANK", "INTCARD"
+        };
 
         public VnPayPaymentGateway(IOptions<VnPayOptions> opt)
         {
@@ -47,8 +53,15 @@ namespace Infrastructure.Payments.Providers.VnPay
             vnp.AddRequestData("vnp_ReturnUrl", _opt.vnp_ReturnUrl);
             vnp.AddRequestData("vnp_TxnRef", txnRef);
 
+            // BankCode tùy chọn; nếu rỗng hoặc không thuộc danh sách hợp lệ thì KHÔNG gửi sang VNPay
             if (!string.IsNullOrWhiteSpace(bankCode))
-                vnp.AddRequestData("vnp_BankCode", bankCode);
+            {
+                var code = bankCode.Trim().ToUpperInvariant();
+                if (AllowedBankCodes.Contains(code))
+                {
+                    vnp.AddRequestData("vnp_BankCode", code);
+                }
+            }
 
             var url = vnp.CreateRequestUrl(_opt.vnp_BaseUrl, _opt.vnp_HashSecret);
 
