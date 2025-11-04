@@ -18,10 +18,12 @@ namespace WebAPI.Controllers
         public VnPayController(IPaymentOrchestrator orchestrator) => _orchestrator = orchestrator;
 
         /// <summary>
-        /// Tạo URL thanh toán VNPay cho một đơn hàng
+        /// [Internal] Tạo URL thanh toán VNPay cho một đơn hàng.
+        /// Khuyến nghị client dùng endpoint tiện lợi: POST /api/v1/me/orders/{orderId}/checkout
         /// </summary>
         [HttpPost("checkout")]
-        [Authorize] // yêu cầu đăng nhập
+        [Authorize(Roles = "Admin,Teacher")] // giới hạn nội bộ/test/ops
+        [ApiExplorerSettings(IgnoreApi = true)] // ẩn khỏi Swagger công khai
         public async Task<IActionResult> CreateCheckout([FromBody] CreatePaymentCommand cmd, CancellationToken ct)
         {
             if (string.IsNullOrWhiteSpace(cmd.ClientIp))

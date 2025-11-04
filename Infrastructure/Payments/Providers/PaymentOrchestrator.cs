@@ -143,6 +143,9 @@ namespace Infrastructure.Payments.Providers
             payment.Status = PaymentStatus.Paid;
             payment.PaidDate = DateTime.UtcNow;
             order.Status = OrderStatus.Paid;
+            // Important: OrderRepository.GetByIdAsync returns AsNoTracking()
+            // so we must explicitly mark the entity as modified for EF to persist the change.
+            _uow.OrderRepository.Update(order);
 
             await _uow.SaveChangesAsync();
 
