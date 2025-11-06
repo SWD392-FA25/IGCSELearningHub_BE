@@ -20,6 +20,7 @@ namespace Infrastructure
         public readonly IQuizRepository _quizRepository;
         public readonly IQuizQuestionRepository _quizQuestionRepository;
         public readonly IQuizAttemptRepository _quizAttemptRepository;
+        public readonly ICurriculumRepository _curriculumRepository;
         public readonly ILessonRepository _lessonRepository;
         public readonly ILessonCompletionRepository _lessonCompletionRepository;
         public readonly ILivestreamRegistrationRepository _livestreamRegistrationRepository;
@@ -43,6 +44,7 @@ namespace Infrastructure
         public IQuizRepository QuizRepository => _quizRepository;   
         public IQuizQuestionRepository QuizQuestionRepository => _quizQuestionRepository;
         public IQuizAttemptRepository QuizAttemptRepository => _quizAttemptRepository;
+        public ICurriculumRepository CurriculumRepository => _curriculumRepository;
         public ILessonRepository LessonRepository => _lessonRepository;
         public ILessonCompletionRepository LessonCompletionRepository => _lessonCompletionRepository;
         public ILivestreamRegistrationRepository LivestreamRegistrationRepository => _livestreamRegistrationRepository;
@@ -67,6 +69,7 @@ namespace Infrastructure
             IQuizRepository quizRepository,
             IQuizQuestionRepository quizQuestionRepository,
             IQuizAttemptRepository quizAttemptRepository,
+            ICurriculumRepository curriculumRepository,
             ILessonRepository lessonRepository,
             ILessonCompletionRepository lessonCompletionRepository,
             ILivestreamRegistrationRepository livestreamRegistrationRepository,
@@ -92,6 +95,7 @@ namespace Infrastructure
             _quizRepository = quizRepository;
             _quizQuestionRepository = quizQuestionRepository;
             _quizAttemptRepository = quizAttemptRepository;
+            _curriculumRepository = curriculumRepository;
             _lessonRepository = lessonRepository;
             _lessonCompletionRepository = lessonCompletionRepository;
             _livestreamRegistrationRepository = livestreamRegistrationRepository;

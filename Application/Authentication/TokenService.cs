@@ -9,7 +9,7 @@ namespace Application.Authentication
     {
         private readonly IAccessTokenFactory _access;
         private readonly IRefreshTokenManager _refresh;
-        private readonly IUnitOfWork _uow; // to load account info during refresh
+        private readonly IUnitOfWork _uow;
 
         public TokenService(IAccessTokenFactory access, IRefreshTokenManager refresh, IUnitOfWork uow)
         {
@@ -46,7 +46,6 @@ namespace Application.Authentication
             if (!ok || token == null)
                 return Result<AuthenticatedUserDTO>.Fail(error ?? "Invalid refresh token.", 401);
 
-            // Load actual account to preserve real username/role/status in the new access token
             var account = await _uow.AccountRepository.GetByIdAsync(token.AccountId);
             if (account == null)
                 return Result<AuthenticatedUserDTO>.Fail("Account not found for this token.", 401);

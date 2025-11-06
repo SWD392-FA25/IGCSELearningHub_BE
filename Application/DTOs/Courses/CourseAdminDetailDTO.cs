@@ -11,7 +11,9 @@ namespace Application.DTOs.Courses
         public int Id { get; set; }
         public string Title { get; set; } = null!;
         public string? Description { get; set; }
+        public string? Info { get; set; }
         public string? Level { get; set; }
+        public string SubjectGroup { get; set; } = string.Empty;
         public decimal Price { get; set; }
         public DateTime CreatedAt { get; set; }
         public int TotalQuizzes { get; set; }

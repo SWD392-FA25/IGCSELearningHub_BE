@@ -20,9 +20,6 @@ namespace Application.Services
 
         public async Task<Result<IEnumerable<LessonDetailDTO>>> GetMyLessonsAsync(int accountId, int courseId)
         {
-            var enrolled = await EnsureEnrolled(accountId, courseId);
-            if (!enrolled) return Result<IEnumerable<LessonDetailDTO>>.Fail("Enrollment required.", 403);
-
             var enrollment = await _uow.EnrollmentRepository.GetAllQueryable()
                 .FirstOrDefaultAsync(e => e.AccountId == accountId && e.CourseId == courseId && !e.IsDeleted && e.Status != EnrollmentStatus.Canceled);
             if (enrollment == null) return Result<IEnumerable<LessonDetailDTO>>.Fail("Enrollment required.", 403);
@@ -30,13 +27,15 @@ namespace Application.Services
             var lc = _uow.LessonCompletionRepository.GetAllQueryable()
                 .Where(x => x.EnrollmentId == enrollment.Id);
 
-            var items = await _uow.LessonRepository.GetAllQueryable()
+            var items = await _uow.LessonRepository.GetAllQueryable($"{nameof(Lesson.Curriculum)}")
                 .Where(l => l.CourseId == courseId)
-                .OrderBy(l => l.OrderIndex)
+                .OrderBy(l => l.Curriculum.OrderIndex)
+                .ThenBy(l => l.OrderIndex)
                 .Select(l => new LessonDetailDTO
                 {
                     LessonId = l.Id,
                     CourseId = l.CourseId,
+                    CurriculumId = l.CurriculumId,
                     Title = l.Title,
                     Description = l.Description,
                     VideoUrl = l.VideoUrl,
@@ -67,6 +66,7 @@ namespace Application.Services
             {
                 LessonId = l.Id,
                 CourseId = l.CourseId,
+                CurriculumId = l.CurriculumId,
                 Title = l.Title,
                 Description = l.Description,
                 VideoUrl = l.VideoUrl,

@@ -2,6 +2,7 @@
 using Application.Wrappers;
 using Application.Extensions;
 using Domain.Entities;
+using Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Application.DTOs.Courses;
@@ -51,6 +52,7 @@ namespace Application.Services
                 Id = c.Id,
                 Title = c.Title,
                 Level = c.Level,
+                SubjectGroup = c.SubjectGroup.ToString(),
                 Price = c.Price,
                 CreatedAt = c.CreatedAt
             });
@@ -72,7 +74,9 @@ namespace Application.Services
                 Id = c.Id,
                 Title = c.Title,
                 Description = c.Description,
+                Info = c.Info,
                 Level = c.Level,
+                SubjectGroup = c.SubjectGroup.ToString(),
                 Price = c.Price,
                 CreatedAt = c.CreatedAt,
                 TotalQuizzes = c.Quizzes.Count(x => !x.IsDeleted),
@@ -91,11 +95,16 @@ namespace Application.Services
             if (dto.Price < 0)
                 return Result<int>.Fail("Price must be >= 0.", 400);
 
+            if (!TryParseSubjectGroup(dto.SubjectGroup, out var subjectGroup, out var groupError))
+                return Result<int>.Fail(groupError ?? "Invalid subject group.", 400);
+
             var course = new Course
             {
                 Title = dto.Title.Trim(),
                 Description = dto.Description,
+                Info = dto.Info,
                 Level = dto.Level,
+                SubjectGroup = subjectGroup,
                 Price = dto.Price
             };
 
@@ -115,9 +124,14 @@ namespace Application.Services
             if (dto.Price < 0)
                 return Result<bool>.Fail("Price must be >= 0.", 400);
 
+            if (!TryParseSubjectGroup(dto.SubjectGroup, out var subjectGroup, out var groupError))
+                return Result<bool>.Fail(groupError ?? "Invalid subject group.", 400);
+
             course.Title = dto.Title.Trim();
             course.Description = dto.Description;
+            course.Info = dto.Info;
             course.Level = dto.Level;
+            course.SubjectGroup = subjectGroup;
             course.Price = dto.Price;
 
             _uow.CourseRepository.Update(course);
@@ -135,6 +149,26 @@ namespace Application.Services
             await _uow.SaveChangesAsync();
 
             return Result<bool>.Success(true, "Deleted", 200);
+        }
+
+        private static bool TryParseSubjectGroup(string? input, out SubjectGroup group, out string? errorMessage)
+        {
+            if (string.IsNullOrWhiteSpace(input))
+            {
+                group = SubjectGroup.None;
+                errorMessage = null;
+                return true;
+            }
+
+            if (Enum.TryParse<SubjectGroup>(input.Trim(), true, out group))
+            {
+                errorMessage = null;
+                return true;
+            }
+
+            group = SubjectGroup.None;
+            errorMessage = $"SubjectGroup '{input}' is invalid. Allowed values: {string.Join(", ", Enum.GetNames(typeof(SubjectGroup)))}.";
+            return false;
         }
     }
 }

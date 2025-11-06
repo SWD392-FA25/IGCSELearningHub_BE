@@ -81,7 +81,6 @@ namespace WebAPI
                 builder.Services.AddControllers().AddJsonOptions(options =>
                 {
                     options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
-                    // Allow both string and numeric enum values (e.g., "Course" or 0)
                     options.JsonSerializerOptions.Converters.Add(
                         new JsonStringEnumConverter(null, allowIntegerValues: true));
                 });

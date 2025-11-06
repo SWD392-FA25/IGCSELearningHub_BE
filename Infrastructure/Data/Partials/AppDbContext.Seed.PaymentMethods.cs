@@ -9,6 +9,9 @@ namespace Infrastructure.Data
         partial void OnModelCreatingPartial(ModelBuilder modelBuilder)
         {
             ConfigurePaymentMethods(modelBuilder);
+            ConfigureAccounts(modelBuilder);
+            ConfigureCourses(modelBuilder);
+            ConfigureLivestreams(modelBuilder);
         }
 
         private static void ConfigurePaymentMethods(ModelBuilder modelBuilder)
@@ -18,11 +21,8 @@ namespace Infrastructure.Data
                 entity.HasKey(e => e.Id);
                 entity.ToTable("PaymentMethods");
 
-                entity.Property(e => e.PaymentMethodName)
-                    .IsRequired();
-
-                entity.Property(e => e.PaymentMethodDescription)
-                    .HasMaxLength(255);
+                entity.Property(e => e.PaymentMethodName).IsRequired();
+                entity.Property(e => e.PaymentMethodDescription).HasMaxLength(255);
 
                 entity.HasData(
                     new

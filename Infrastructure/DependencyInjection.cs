@@ -36,6 +36,7 @@ namespace Infrastructure
             services.AddScoped<IQuizRepository, QuizRepository>();
             services.AddScoped<IQuizQuestionRepository, QuizQuestionRepository>();
             services.AddScoped<IQuizAttemptRepository, QuizAttemptRepository>();
+            services.AddScoped<ICurriculumRepository, CurriculumRepository>();
             services.AddScoped<ILessonRepository, LessonRepository>();
             services.AddScoped<ILessonCompletionRepository, LessonCompletionRepository>();
             services.AddScoped<ILivestreamRegistrationRepository, LivestreamRegistrationRepository>();
@@ -68,6 +69,7 @@ namespace Infrastructure
             services.AddScoped<IEnrollmentStudentService, EnrollmentStudentService>();
             services.AddScoped<IAssignmentStudentService, AssignmentStudentService>();
             services.AddScoped<ILessonStudentService, LessonStudentService>();
+            services.AddScoped<ICurriculumService, CurriculumService>();
             services.AddScoped<IStudentSubmissionService, StudentSubmissionService>();
             services.AddScoped<IOrderService, OrderService>();
             services.AddScoped<IOrderQueryService, OrderQueryService>();

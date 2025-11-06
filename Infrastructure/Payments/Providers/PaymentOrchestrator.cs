@@ -110,7 +110,6 @@ namespace Infrastructure.Payments.Providers
 
             if (!result.IsSuccess)
             {
-                // Failed callback: if we have a pending payment, mark it canceled; otherwise ignore for idempotency
                 if (pendingPayment != null)
                 {
                     pendingPayment.Status = PaymentStatus.Canceled;
@@ -143,8 +142,6 @@ namespace Infrastructure.Payments.Providers
             payment.PaidDate = DateTime.UtcNow;
             _uow.PaymentRepository.Update(payment);
             order.Status = OrderStatus.Paid;
-            // Important: OrderRepository.GetByIdAsync returns AsNoTracking()
-            // so we must explicitly mark the entity as modified for EF to persist the change.
             _uow.OrderRepository.Update(order);
 
             await _uow.SaveChangesAsync();
