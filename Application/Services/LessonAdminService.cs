@@ -23,14 +23,14 @@ namespace Application.Services
             var course = await _uow.CourseRepository.GetByIdAsync(courseId);
             if (course == null) return Result<int>.Fail("Course not found.", 404);
 
-            var curriculum = await _uow.CurriculumRepository.GetByIdAsync(dto.CurriculumId);
-            if (curriculum == null || curriculum.CourseId != courseId)
-                return Result<int>.Fail("Curriculum not found in this course.", 404);
+            var unit = await _uow.UnitRepository.GetByIdAsync(dto.UnitId);
+            if (unit == null || unit.CourseId != courseId)
+                return Result<int>.Fail("Unit not found in this course.", 404);
 
-            // order within curriculum
+            // order within unit
             var q = _uow.LessonRepository
                 .GetAllQueryable()
-                .Where(l => l.CurriculumId == dto.CurriculumId);
+                .Where(l => l.UnitId == dto.UnitId);
 
             int nextOrder;
             var any = await q.AnyAsync();
@@ -47,7 +47,7 @@ namespace Application.Services
             var lesson = new Lesson
             {
                 CourseId = courseId,
-                CurriculumId = dto.CurriculumId,
+                UnitId = dto.UnitId,
                 Title = dto.Title.Trim(),
                 Description = dto.Description,
                 VideoUrl = dto.VideoUrl,
@@ -70,15 +70,15 @@ namespace Application.Services
             if (string.IsNullOrWhiteSpace(dto.Title))
                 return Result<bool>.Fail("Title is required.", 400);
 
-            if (dto.CurriculumId.HasValue && dto.CurriculumId.Value != lesson.CurriculumId)
+            if (dto.UnitId.HasValue && dto.UnitId.Value != lesson.UnitId)
             {
-                var curriculum = await _uow.CurriculumRepository.GetByIdAsync(dto.CurriculumId.Value);
-                if (curriculum == null || curriculum.CourseId != lesson.CourseId)
-                    return Result<bool>.Fail("Invalid curriculum for this course.", 400);
+                var unit = await _uow.UnitRepository.GetByIdAsync(dto.UnitId.Value);
+                if (unit == null || unit.CourseId != lesson.CourseId)
+                    return Result<bool>.Fail("Invalid unit for this course.", 400);
 
-                lesson.CurriculumId = dto.CurriculumId.Value;
+                lesson.UnitId = dto.UnitId.Value;
                 var maxOrder = await _uow.LessonRepository.GetAllQueryable()
-                    .Where(l => l.CurriculumId == lesson.CurriculumId && l.Id != lesson.Id)
+                    .Where(l => l.UnitId == lesson.UnitId && l.Id != lesson.Id)
                     .Select(l => (int?)l.OrderIndex)
                     .MaxAsync() ?? 0;
                 lesson.OrderIndex = maxOrder + 1;
@@ -117,7 +117,7 @@ namespace Application.Services
             lesson.OrderIndex = dto.OrderIndex;
             _uow.LessonRepository.Update(lesson);
             await _uow.SaveChangesAsync();
-            return Result<bool>.Success(true, "Order updated", 200);
+            return Result<bool>.Success(true, "OrderIndex updated", 200);
         }
     }
 }

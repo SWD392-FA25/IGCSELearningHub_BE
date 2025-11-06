@@ -30,5 +30,5 @@ public partial class Course : BaseFullEntity
 
     public virtual ICollection<CoursePackage> Packages { get; set; } = new List<CoursePackage>();
 
-    public virtual ICollection<Curriculum> Curricula { get; set; } = new List<Curriculum>();
+    public virtual ICollection<Unit> Units { get; set; } = new List<Unit>();
 }

@@ -134,7 +134,7 @@ namespace Application.Services
                     $"{nameof(Order.Payments)},{nameof(Order.OrderDetails)}")
                 .FirstOrDefaultAsync(o => o.Id == orderId);
 
-            if (order == null) return Result<int>.Fail("Order not found.", 404);
+            if (order == null) return Result<int>.Fail("OrderIndex not found.", 404);
 
             var hasPaid = order.Payments.Any(p => p.Status == PaymentStatus.Paid);
             if (!hasPaid) return Result<int>.Fail("No successful payment for this order.", 400);
@@ -165,7 +165,7 @@ namespace Application.Services
 
             var distinctCourseIds = courseIds.Distinct().ToList();
             if (distinctCourseIds.Count == 0)
-                return Result<int>.Fail("Order has no course items.", 400);
+                return Result<int>.Fail("OrderIndex has no course items.", 400);
 
             int created = 0;
             using var tx = await _uow.BeginTransactionAsync();

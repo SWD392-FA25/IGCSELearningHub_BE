@@ -37,7 +37,7 @@ namespace Infrastructure.Payments.Providers
         public async Task<PaymentCheckoutDTO> CreateCheckoutAsync(CreatePaymentCommand command, CancellationToken ct = default)
         {
             var order = await _uow.OrderRepository.GetByIdAsync(command.OrderId);
-            if (order is null) throw new InvalidOperationException("Order not found.");
+            if (order is null) throw new InvalidOperationException("OrderIndex not found.");
 
             var amountVnd = order.TotalAmount;
             if (amountVnd <= 0) throw new InvalidOperationException("Invalid order amount.");
@@ -98,7 +98,7 @@ namespace Infrastructure.Payments.Providers
                 _logger.LogInformation("Idempotent VNPay callback for already-paid order {OrderId}. Ignored.", order.Id);
                 result.IsSuccess = true;
                 result.Status = PaymentStatus.Paid;
-                result.Message = (result.Message ?? "").Length > 0 ? result.Message : "Order already paid. Callback ignored.";
+                result.Message = (result.Message ?? "").Length > 0 ? result.Message : "OrderIndex already paid. Callback ignored.";
                 return result;
             }
 

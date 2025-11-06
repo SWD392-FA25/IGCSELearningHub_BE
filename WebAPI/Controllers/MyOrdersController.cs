@@ -89,7 +89,7 @@ namespace WebAPI.Controllers
             if (!status.Succeeded) return StatusCode(status.StatusCode, status);
             if (status.Data!.Status.Equals("Paid", StringComparison.OrdinalIgnoreCase))
             {
-                return StatusCode(400, Result<object>.Fail("Order already paid.", 400));
+                return StatusCode(400, Result<object>.Fail("OrderIndex already paid.", 400));
             }
 
             var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";

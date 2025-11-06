@@ -31,13 +31,13 @@ namespace Infrastructure.Data
             var levels = new[] { "Foundation", "Intermediate", "Advanced" };
 
             var courses = new List<object>();
-            var curricula = new List<object>();
+            var units = new List<object>();
             var lessons = new List<object>();
             var assignments = new List<object>();
             var quizzes = new List<object>();
 
             var courseId = 1;
-            var curriculumId = 1;
+            var unitId = 1;
             var lessonId = 1;
             var assignmentId = 1;
             var quizId = 1;
@@ -69,24 +69,24 @@ namespace Infrastructure.Data
                         IsDeleted = false
                     });
 
-                    var moduleCount = random.Next(3, 5);
+                    var unitCount = random.Next(3, 5);
                     var lessonCounter = 1;
-                    for (var module = 1; module <= moduleCount; module++)
+                    for (var module = 1; module <= unitCount; module++)
                     {
-                        var curriculumTitle = $"Module {module}: {subject.Name} Unit";
-                        var curriculumDesc = $"Focus topics for {subject.Name} module {module}.";
-                        var curriculumCreated = createdAt.AddDays(module);
+                        var unitTitle = $"Unit {module}: {subject.Name} Module";
+                        var unitDesc = $"Focus topics for {subject.Name} unit {module}.";
+                        var unitCreated = createdAt.AddDays(module);
 
-                        curricula.Add(new
+                        units.Add(new
                         {
-                            Id = curriculumId,
+                            Id = unitId,
                             CourseId = courseId,
-                            Title = curriculumTitle,
-                            Description = curriculumDesc,
+                            Title = unitTitle,
+                            Description = unitDesc,
                             OrderIndex = module,
-                            CreatedAt = curriculumCreated,
+                            CreatedAt = unitCreated,
                             CreatedBy = "Seed",
-                            ModifiedAt = curriculumCreated,
+                            ModifiedAt = unitCreated,
                             ModifiedBy = "Seed",
                             IsDeleted = false
                         });
@@ -95,13 +95,13 @@ namespace Infrastructure.Data
                         for (var order = 1; order <= lessonsInModule; order++)
                         {
                             var slug = subject.Name.ToLower().Replace(" ", "-");
-                            var lessonCreated = curriculumCreated.AddDays(order);
+                            var lessonCreated = unitCreated.AddDays(order);
 
                             lessons.Add(new
                             {
                                 Id = lessonId,
                                 CourseId = courseId,
-                                CurriculumId = curriculumId,
+                                UnitId = unitId,
                                 Title = $"Lesson {lessonCounter}: {subject.Name} Essentials",
                                 Description = $"Core concepts for {subject.Name.ToLower()} lesson {lessonCounter}.",
                                 VideoUrl = random.Next(0, 2) == 0 ? (string?)null : $"https://cdn.example.com/videos/{slug}-{idx}-{lessonCounter}.mp4",
@@ -118,12 +118,12 @@ namespace Infrastructure.Data
                             lessonCounter++;
                         }
 
-                        curriculumId++;
+                        unitId++;
                     }
 
                     for (var a = 1; a <= 2; a++)
                     {
-                        var assignCreated = createdAt.AddDays(moduleCount + a + 2);
+                        var assignCreated = createdAt.AddDays(unitCount + a + 2);
                         assignments.Add(new
                         {
                             Id = assignmentId,
@@ -141,7 +141,7 @@ namespace Infrastructure.Data
 
                     for (var q = 1; q <= 2; q++)
                     {
-                        var quizCreated = createdAt.AddDays(moduleCount + q + 5);
+                        var quizCreated = createdAt.AddDays(unitCount + q + 5);
                         quizzes.Add(new
                         {
                             Id = quizId,
@@ -162,7 +162,7 @@ namespace Infrastructure.Data
             }
 
             modelBuilder.Entity<Course>().HasData(courses.ToArray());
-            modelBuilder.Entity<Curriculum>().HasData(curricula.ToArray());
+            modelBuilder.Entity<Unit>().HasData(units.ToArray());
             modelBuilder.Entity<Lesson>().HasData(lessons.ToArray());
             modelBuilder.Entity<Assignment>().HasData(assignments.ToArray());
             modelBuilder.Entity<Quiz>().HasData(quizzes.ToArray());

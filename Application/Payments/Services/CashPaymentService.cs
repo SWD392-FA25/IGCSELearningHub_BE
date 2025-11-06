@@ -41,7 +41,7 @@ namespace Application.Payments.Services
 
             if (order == null)
             {
-                return Result<CashPaymentResultDTO>.Fail("Order not found.", 404);
+                return Result<CashPaymentResultDTO>.Fail("OrderIndex not found.", 404);
             }
 
             var amount = request.Amount ?? order.TotalAmount;
@@ -80,7 +80,7 @@ namespace Application.Payments.Services
                         PaidDate = latestPayment.PaidDate ?? latestPayment.ModifiedAt,
                         Method = latestPayment.PaymentMethod?.PaymentMethodName ?? PaymentMethodUtilities.CashMethodName
                     };
-                    return Result<CashPaymentResultDTO>.Success(dto, "Order already paid.");
+                    return Result<CashPaymentResultDTO>.Success(dto, "OrderIndex already paid.");
                 }
 
                 // fallback if no payment record (should not happen)
@@ -93,7 +93,7 @@ namespace Application.Payments.Services
                     PaidDate = order.ModifiedAt,
                     Method = PaymentMethodUtilities.CashMethodName
                 };
-                return Result<CashPaymentResultDTO>.Success(fallback, "Order already paid.");
+                return Result<CashPaymentResultDTO>.Success(fallback, "OrderIndex already paid.");
             }
 
             using var transaction = await _uow.BeginTransactionAsync();

@@ -12,7 +12,10 @@ namespace Infrastructure.Data
         {
             var accounts = new List<object>();
             var baseTime = new DateTime(2024, 1, 1, 1, 0, 0, DateTimeKind.Utc);
-            const string passwordHash = "$2a$12$S2s12f8mDSvk3zXqG7KXy1BPeGS.2o0BSXS1SZXUMKOI5oT7Ck9Da";
+
+            const string passwordPlain = "IGCSE@2024!";
+            const string passwordSalt = "$2a$12$K1pL9sQ7wX3zD5fG8hJj9u";
+            string passwordHash = BCrypt.Net.BCrypt.HashPassword(passwordPlain, passwordSalt);
 
             var seedAccounts = new (string UserName, string FullName, string Email, AccountRole Role, string Gender, string Phone)[]
             {
