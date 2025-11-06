@@ -1,3 +1,6 @@
+using System.Collections.Generic;
+using System.Linq;
+using Application.DTOs.Courses;
 using Application.DTOs.Lessons;
 using Application.Services.Interfaces;
 using Application.Wrappers;
@@ -16,6 +19,73 @@ namespace Application.Services
         {
             _uow = uow;
             _progressService = progressService;
+        }
+
+        public async Task<Result<CourseDetailDTO>> GetMyCourseDetailAsync(int accountId, int courseId)
+        {
+            var enrollment = await _uow.EnrollmentRepository.GetAllQueryable()
+                .FirstOrDefaultAsync(e => e.AccountId == accountId && e.CourseId == courseId && !e.IsDeleted && e.Status != EnrollmentStatus.Canceled);
+            if (enrollment == null) return Result<CourseDetailDTO>.Fail("Enrollment required.", 403);
+
+            var course = await _uow.CourseRepository.GetAllQueryable()
+                .Include(c => c.Quizzes)
+                .Include(c => c.Assignments)
+                .Include(c => c.Livestreams)
+                .Include(c => c.Units)
+                    .ThenInclude(unit => unit.Lessons)
+                .FirstOrDefaultAsync(c => c.Id == courseId);
+
+            if (course == null) return Result<CourseDetailDTO>.Fail("Course not found.", 404);
+
+            var completedLessonIds = await _uow.LessonCompletionRepository.GetAllQueryable()
+                .Where(lc => lc.EnrollmentId == enrollment.Id)
+                .Select(lc => lc.LessonId)
+                .ToListAsync();
+            var completedSet = new HashSet<int>(completedLessonIds);
+
+            var units = course.Units
+                .Where(unit => !unit.IsDeleted)
+                .OrderBy(unit => unit.OrderIndex)
+                .Select(unit => new CourseUnitOutlineDTO
+                {
+                    Id = unit.Id,
+                    Title = unit.Title,
+                    Description = unit.Description,
+                    Order = unit.OrderIndex,
+                    Lessons = unit.Lessons
+                        .Where(l => !l.IsDeleted)
+                        .OrderBy(l => l.OrderIndex)
+                        .Select(l => new CourseLessonOutlineDTO
+                        {
+                            Id = l.Id,
+                            Title = l.Title,
+                            Description = l.Description,
+                            Order = l.OrderIndex,
+                            IsFreePreview = l.IsFreePreview,
+                            Completed = completedSet.Contains(l.Id),
+                            VideoUrl = l.VideoUrl,
+                            AttachmentUrl = l.AttachmentUrl
+                        })
+                        .ToList()
+                })
+                .ToList();
+
+            var dto = new CourseDetailDTO
+            {
+                Id = course.Id,
+                Title = course.Title,
+                Description = course.Description,
+                Info = course.Info,
+                Level = course.Level,
+                SubjectGroup = course.SubjectGroup.ToString(),
+                Price = course.Price,
+                TotalQuizzes = course.Quizzes.Count(x => !x.IsDeleted),
+                TotalAssignments = course.Assignments.Count(x => !x.IsDeleted),
+                TotalLivestreams = course.Livestreams.Count(x => !x.IsDeleted),
+                Units = units
+            };
+
+            return Result<CourseDetailDTO>.Success(dto);
         }
 
         public async Task<Result<IEnumerable<LessonDetailDTO>>> GetMyLessonsAsync(int accountId, int courseId)

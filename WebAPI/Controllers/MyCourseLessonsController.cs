@@ -3,6 +3,7 @@ using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using System.Threading.Tasks;
 
 namespace WebAPI.Controllers
 {
@@ -18,14 +19,6 @@ namespace WebAPI.Controllers
         public MyCourseLessonsController(ILessonStudentService service)
         {
             _service = service;
-        }
-
-        // GET /me/courses/{courseId}/lessons
-        [HttpGet]
-        public async Task<IActionResult> GetMine([FromRoute] int courseId)
-        {
-            var result = await _service.GetMyLessonsAsync(CurrentUserId, courseId);
-            return StatusCode(result.StatusCode, result);
         }
 
         // GET /me/courses/{courseId}/lessons/{lessonId}
@@ -45,4 +38,3 @@ namespace WebAPI.Controllers
         }
     }
 }
-

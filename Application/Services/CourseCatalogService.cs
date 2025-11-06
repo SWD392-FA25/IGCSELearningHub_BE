@@ -87,7 +87,7 @@ namespace Application.Services
                     Id = unit.Id,
                     Title = unit.Title,
                     Description = unit.Description,
-                    OrderIndex = unit.OrderIndex,
+                    Order = unit.OrderIndex,
                     Lessons = unit.Lessons
                         .Where(l => !l.IsDeleted)
                         .OrderBy(l => l.OrderIndex)
@@ -96,8 +96,9 @@ namespace Application.Services
                             Id = l.Id,
                             Title = l.Title,
                             Description = l.Description,
-                            OrderIndex = l.OrderIndex,
+                            Order = l.OrderIndex,
                             IsFreePreview = l.IsFreePreview,
+                            Completed = false,
                             VideoUrl = l.VideoUrl,
                             AttachmentUrl = l.AttachmentUrl
                         })
