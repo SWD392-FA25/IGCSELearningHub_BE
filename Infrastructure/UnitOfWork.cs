@@ -20,7 +20,7 @@ namespace Infrastructure
         public readonly IQuizRepository _quizRepository;
         public readonly IQuizQuestionRepository _quizQuestionRepository;
         public readonly IQuizAttemptRepository _quizAttemptRepository;
-        public readonly ICurriculumRepository _curriculumRepository;
+        public readonly IUnitRepository _unitRepository;
         public readonly ILessonRepository _lessonRepository;
         public readonly ILessonCompletionRepository _lessonCompletionRepository;
         public readonly ILivestreamRegistrationRepository _livestreamRegistrationRepository;
@@ -44,7 +44,7 @@ namespace Infrastructure
         public IQuizRepository QuizRepository => _quizRepository;   
         public IQuizQuestionRepository QuizQuestionRepository => _quizQuestionRepository;
         public IQuizAttemptRepository QuizAttemptRepository => _quizAttemptRepository;
-        public ICurriculumRepository CurriculumRepository => _curriculumRepository;
+        public IUnitRepository UnitRepository => _unitRepository;
         public ILessonRepository LessonRepository => _lessonRepository;
         public ILessonCompletionRepository LessonCompletionRepository => _lessonCompletionRepository;
         public ILivestreamRegistrationRepository LivestreamRegistrationRepository => _livestreamRegistrationRepository;
@@ -69,7 +69,7 @@ namespace Infrastructure
             IQuizRepository quizRepository,
             IQuizQuestionRepository quizQuestionRepository,
             IQuizAttemptRepository quizAttemptRepository,
-            ICurriculumRepository curriculumRepository,
+            IUnitRepository unitRepository,
             ILessonRepository lessonRepository,
             ILessonCompletionRepository lessonCompletionRepository,
             ILivestreamRegistrationRepository livestreamRegistrationRepository,
@@ -95,7 +95,7 @@ namespace Infrastructure
             _quizRepository = quizRepository;
             _quizQuestionRepository = quizQuestionRepository;
             _quizAttemptRepository = quizAttemptRepository;
-            _curriculumRepository = curriculumRepository;
+            _unitRepository = unitRepository;
             _lessonRepository = lessonRepository;
             _lessonCompletionRepository = lessonCompletionRepository;
             _livestreamRegistrationRepository = livestreamRegistrationRepository;

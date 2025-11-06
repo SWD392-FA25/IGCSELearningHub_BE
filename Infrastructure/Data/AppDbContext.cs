@@ -38,7 +38,7 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<PaymentMethod> PaymentMethods { get; set; }
 
-    public virtual DbSet<Curriculum> Curricula { get; set; }
+    public virtual DbSet<Unit> Units { get; set; }
 
     public virtual DbSet<Lesson> Lessons { get; set; }
 
@@ -128,22 +128,22 @@ public partial class AppDbContext : DbContext
             .HasForeignKey(a => a.CourseId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Curricula -> Courses
-        modelBuilder.Entity<Curriculum>()
-            .HasOne(cu => cu.Course)
-            .WithMany(c => c.Curricula)
-            .HasForeignKey(cu => cu.CourseId)
+        // Units -> Courses
+        modelBuilder.Entity<Unit>()
+            .HasOne(unit => unit.Course)
+            .WithMany(c => c.Units)
+            .HasForeignKey(unit => unit.CourseId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        modelBuilder.Entity<Curriculum>()
-            .Property(cu => cu.Title)
+        modelBuilder.Entity<Unit>()
+            .Property(unit => unit.Title)
             .IsRequired();
 
-        // Lessons -> Curriculum; redundant FK to Course for quick access
+        // Lessons -> Unit; redundant FK to Course for quick access
         modelBuilder.Entity<Lesson>()
-            .HasOne(l => l.Curriculum)
-            .WithMany(cu => cu.Lessons)
-            .HasForeignKey(l => l.CurriculumId)
+            .HasOne(l => l.Unit)
+            .WithMany(unit => unit.Lessons)
+            .HasForeignKey(l => l.UnitId)
             .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<Lesson>()

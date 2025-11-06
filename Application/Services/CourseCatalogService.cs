@@ -73,27 +73,27 @@ namespace Application.Services
                 .Include(c => c.Quizzes)
                 .Include(c => c.Assignments)
                 .Include(c => c.Livestreams)
-                .Include(c => c.Curricula)
-                    .ThenInclude(cu => cu.Lessons)
+                .Include(c => c.Units)
+                    .ThenInclude(unit => unit.Lessons)
                 .FirstOrDefaultAsync(c => c.Id == courseId);
 
             if (course == null) return Result<CourseDetailDTO>.Fail("Course not found.", 404);
 
-            var curricula = course.Curricula
-                .Where(cu => !cu.IsDeleted)
-                .OrderBy(cu => cu.OrderIndex)
-                .Select(cu => new CourseCurriculumOutlineDTO
+            var units = course.Units
+                .Where(unit => !unit.IsDeleted)
+                .OrderBy(unit => unit.OrderIndex)
+                .Select(unit => new CourseUnitOutlineDTO
                 {
-                    CurriculumId = cu.Id,
-                    Title = cu.Title,
-                    Description = cu.Description,
-                    OrderIndex = cu.OrderIndex,
-                    Lessons = cu.Lessons
+                    Id = unit.Id,
+                    Title = unit.Title,
+                    Description = unit.Description,
+                    OrderIndex = unit.OrderIndex,
+                    Lessons = unit.Lessons
                         .Where(l => !l.IsDeleted)
                         .OrderBy(l => l.OrderIndex)
                         .Select(l => new CourseLessonOutlineDTO
                         {
-                            LessonId = l.Id,
+                            Id = l.Id,
                             Title = l.Title,
                             Description = l.Description,
                             OrderIndex = l.OrderIndex,
@@ -117,7 +117,7 @@ namespace Application.Services
                 TotalQuizzes = course.Quizzes.Count(x => !x.IsDeleted),
                 TotalAssignments = course.Assignments.Count(x => !x.IsDeleted),
                 TotalLivestreams = course.Livestreams.Count(x => !x.IsDeleted),
-                Curricula = curricula
+                Units = units
             };
 
             return Result<CourseDetailDTO>.Success(dto);

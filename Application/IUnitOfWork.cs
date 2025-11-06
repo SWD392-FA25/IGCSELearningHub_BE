@@ -22,7 +22,7 @@ namespace Application
         IQuizQuestionRepository QuizQuestionRepository { get; }
         IQuizAttemptRepository QuizAttemptRepository { get; }
         ILessonRepository LessonRepository { get; }
-        ICurriculumRepository CurriculumRepository { get; }
+        IUnitRepository UnitRepository { get; }
         ILessonCompletionRepository LessonCompletionRepository { get; }
         ILivestreamRegistrationRepository LivestreamRegistrationRepository  { get; }
         ILivestreamRepository LivestreamRepository { get; }

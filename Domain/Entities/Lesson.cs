@@ -4,8 +4,8 @@ namespace Domain.Entities;
 
 public partial class Lesson : BaseFullEntity
 {
-    public int CurriculumId { get; set; }
-    public Curriculum Curriculum { get; set; } = null!;
+    public int UnitId { get; set; }
+    public Unit Unit { get; set; } = null!;
 
     public int CourseId { get; set; }
     public Course Course { get; set; } = null!;

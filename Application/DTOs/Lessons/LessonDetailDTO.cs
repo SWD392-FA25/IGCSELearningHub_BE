@@ -10,7 +10,7 @@ namespace Application.DTOs.Lessons
         public string? AttachmentUrl { get; set; }
         public int OrderIndex { get; set; }
         public bool IsFreePreview { get; set; }
-        public int CurriculumId { get; set; }
+        public int UnitId { get; set; }
         public bool Completed { get; set; }
     }
 }

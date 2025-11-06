@@ -17,7 +17,7 @@ namespace Application.Services
                     $"{nameof(Order.Payments)},{nameof(Order.Account)},{nameof(Order.OrderDetails)}")
                 .FirstOrDefaultAsync(x => x.Id == orderId && x.AccountId == accountId);
 
-            if (o == null) return Result<OrderStatusDTO>.Fail("Order not found.", 404);
+            if (o == null) return Result<OrderStatusDTO>.Fail("OrderIndex not found.", 404);
 
             var lastPay = o.Payments
                 .Where(p => !p.IsDeleted)

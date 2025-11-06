@@ -18,6 +18,6 @@ namespace Application.DTOs.Courses
         public int TotalQuizzes { get; set; }
         public int TotalAssignments { get; set; }
         public int TotalLivestreams { get; set; }
-        public IList<CourseCurriculumOutlineDTO> Curricula { get; set; } = new List<CourseCurriculumOutlineDTO>();
+        public IList<CourseUnitOutlineDTO> Units { get; set; } = new List<CourseUnitOutlineDTO>();
     }
 }

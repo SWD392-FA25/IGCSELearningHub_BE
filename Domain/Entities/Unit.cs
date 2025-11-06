@@ -3,11 +3,10 @@ using System.Collections.Generic;
 
 namespace Domain.Entities;
 
-public partial class Curriculum : BaseFullEntity
+public partial class Unit : BaseFullEntity
 {
     public int CourseId { get; set; }
     public Course Course { get; set; } = null!;
-
     public string Title { get; set; } = null!;
     public string? Description { get; set; }
     public int OrderIndex { get; set; }

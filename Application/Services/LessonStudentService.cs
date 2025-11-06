@@ -27,15 +27,15 @@ namespace Application.Services
             var lc = _uow.LessonCompletionRepository.GetAllQueryable()
                 .Where(x => x.EnrollmentId == enrollment.Id);
 
-            var items = await _uow.LessonRepository.GetAllQueryable($"{nameof(Lesson.Curriculum)}")
+            var items = await _uow.LessonRepository.GetAllQueryable($"{nameof(Lesson.Unit)}")
                 .Where(l => l.CourseId == courseId)
-                .OrderBy(l => l.Curriculum.OrderIndex)
+                .OrderBy(l => l.Unit.OrderIndex)
                 .ThenBy(l => l.OrderIndex)
                 .Select(l => new LessonDetailDTO
                 {
                     LessonId = l.Id,
                     CourseId = l.CourseId,
-                    CurriculumId = l.CurriculumId,
+                    UnitId = l.UnitId,
                     Title = l.Title,
                     Description = l.Description,
                     VideoUrl = l.VideoUrl,
@@ -66,7 +66,7 @@ namespace Application.Services
             {
                 LessonId = l.Id,
                 CourseId = l.CourseId,
-                CurriculumId = l.CurriculumId,
+                UnitId = l.UnitId,
                 Title = l.Title,
                 Description = l.Description,
                 VideoUrl = l.VideoUrl,

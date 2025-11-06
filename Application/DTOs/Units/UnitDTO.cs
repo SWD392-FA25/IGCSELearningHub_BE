@@ -1,8 +1,8 @@
-namespace Application.DTOs.Curricula
+namespace Application.DTOs.Units
 {
-    public class CurriculumDTO
+    public class UnitDTO
     {
-        public int CurriculumId { get; set; }
+        public int UnitId { get; set; }
         public int CourseId { get; set; }
         public string Title { get; set; } = null!;
         public string? Description { get; set; }

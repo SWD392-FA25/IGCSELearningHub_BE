@@ -118,14 +118,14 @@ namespace Application.Services
 
             // Build response
             var dto = await BuildOrderSummaryAsync(order.Id, accountId);
-            return Result<OrderSummaryDTO>.Success(dto, "Order created.", 201);
+            return Result<OrderSummaryDTO>.Success(dto, "OrderIndex created.", 201);
         }
 
         public async Task<Result<OrderSummaryDTO>> GetOrderAsync(int accountId, int orderId)
         {
             var exists = await _uow.OrderRepository.GetAllQueryable()
                 .AnyAsync(o => o.Id == orderId && o.AccountId == accountId);
-            if (!exists) return Result<OrderSummaryDTO>.Fail("Order not found.", 404);
+            if (!exists) return Result<OrderSummaryDTO>.Fail("OrderIndex not found.", 404);
 
             var dto = await BuildOrderSummaryAsync(orderId, accountId);
             return Result<OrderSummaryDTO>.Success(dto);
