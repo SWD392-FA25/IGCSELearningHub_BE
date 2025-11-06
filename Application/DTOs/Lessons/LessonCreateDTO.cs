@@ -2,6 +2,7 @@ namespace Application.DTOs.Lessons
 {
     public class LessonCreateDTO
     {
+        public int CurriculumId { get; set; }
         public string Title { get; set; } = null!;
         public string? Description { get; set; }
         public string? VideoUrl { get; set; }
@@ -9,4 +10,3 @@ namespace Application.DTOs.Lessons
         public bool? IsFreePreview { get; set; }
     }
 }
-

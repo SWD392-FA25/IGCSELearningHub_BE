@@ -17,6 +17,8 @@ public partial class Account : BaseFullEntity
 
     public AccountRole Role { get; set; } = AccountRole.Student;
 
+    public string Gender { get; set; } = string.Empty;
+
     public string? Status { get; set; }
 
     public bool IsExternal { get; set; } = false;

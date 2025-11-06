@@ -14,7 +14,7 @@ namespace Application.Services
 
         public async Task<Result<IEnumerable<LessonListItemDTO>>> GetLessonsAsync(int courseId, int? accountId)
         {
-            var q = _uow.LessonRepository.GetAllQueryable()
+            var q = _uow.LessonRepository.GetAllQueryable($"{nameof(Lesson.Curriculum)}")
                 .Where(l => l.CourseId == courseId);
 
             var isEnrolled = await IsEnrolledAsync(accountId, courseId);
@@ -23,15 +23,19 @@ namespace Application.Services
                 q = q.Where(l => l.IsFreePreview);
             }
 
-            var items = await q.OrderBy(l => l.OrderIndex)
+            var items = await q
+                .OrderBy(l => l.Curriculum.OrderIndex)
+                .ThenBy(l => l.OrderIndex)
                 .Select(l => new LessonListItemDTO
                 {
                     LessonId = l.Id,
                     CourseId = l.CourseId,
+                    CurriculumId = l.CurriculumId,
                     Title = l.Title,
                     Description = l.Description,
                     OrderIndex = l.OrderIndex,
-                    IsFreePreview = l.IsFreePreview
+                    IsFreePreview = l.IsFreePreview,
+                    Completed = false
                 })
                 .ToListAsync();
 
@@ -62,7 +66,9 @@ namespace Application.Services
                 VideoUrl = lesson.VideoUrl,
                 AttachmentUrl = lesson.AttachmentUrl,
                 OrderIndex = lesson.OrderIndex,
-                IsFreePreview = lesson.IsFreePreview
+                IsFreePreview = lesson.IsFreePreview,
+                CurriculumId = lesson.CurriculumId,
+                Completed = false
             };
 
             return Result<LessonDetailDTO>.Success(dto);
@@ -80,4 +86,3 @@ namespace Application.Services
         }
     }
 }
-

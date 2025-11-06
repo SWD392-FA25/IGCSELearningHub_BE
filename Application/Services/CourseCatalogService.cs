@@ -1,4 +1,5 @@
-﻿using Application.Services.Interfaces;
+﻿using System.Linq;
+using Application.Services.Interfaces;
 using Application.Wrappers;
 using Application.Extensions;
 using Microsoft.EntityFrameworkCore;
@@ -59,6 +60,8 @@ namespace Application.Services
                 ShortDescription = c.Description != null && c.Description.Length > 160
                     ? c.Description.Substring(0, 160) + "..."
                     : c.Description,
+                Info = c.Info,
+                SubjectGroup = c.SubjectGroup.ToString(),
                 TotalQuizzes = c.Quizzes.Count(x => !x.IsDeleted),
                 TotalAssignments = c.Assignments.Count(x => !x.IsDeleted)
             });
@@ -70,20 +73,51 @@ namespace Application.Services
                 .Include(c => c.Quizzes)
                 .Include(c => c.Assignments)
                 .Include(c => c.Livestreams)
+                .Include(c => c.Curricula)
+                    .ThenInclude(cu => cu.Lessons)
                 .FirstOrDefaultAsync(c => c.Id == courseId);
 
             if (course == null) return Result<CourseDetailDTO>.Fail("Course not found.", 404);
+
+            var curricula = course.Curricula
+                .Where(cu => !cu.IsDeleted)
+                .OrderBy(cu => cu.OrderIndex)
+                .Select(cu => new CourseCurriculumOutlineDTO
+                {
+                    CurriculumId = cu.Id,
+                    Title = cu.Title,
+                    Description = cu.Description,
+                    OrderIndex = cu.OrderIndex,
+                    Lessons = cu.Lessons
+                        .Where(l => !l.IsDeleted)
+                        .OrderBy(l => l.OrderIndex)
+                        .Select(l => new CourseLessonOutlineDTO
+                        {
+                            LessonId = l.Id,
+                            Title = l.Title,
+                            Description = l.Description,
+                            OrderIndex = l.OrderIndex,
+                            IsFreePreview = l.IsFreePreview,
+                            VideoUrl = l.VideoUrl,
+                            AttachmentUrl = l.AttachmentUrl
+                        })
+                        .ToList()
+                })
+                .ToList();
 
             var dto = new CourseDetailDTO
             {
                 Id = course.Id,
                 Title = course.Title,
                 Description = course.Description,
+                Info = course.Info,
                 Level = course.Level,
+                SubjectGroup = course.SubjectGroup.ToString(),
                 Price = course.Price,
                 TotalQuizzes = course.Quizzes.Count(x => !x.IsDeleted),
                 TotalAssignments = course.Assignments.Count(x => !x.IsDeleted),
-                TotalLivestreams = course.Livestreams.Count(x => !x.IsDeleted)
+                TotalLivestreams = course.Livestreams.Count(x => !x.IsDeleted),
+                Curricula = curricula
             };
 
             return Result<CourseDetailDTO>.Success(dto);

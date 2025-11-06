@@ -4,6 +4,9 @@ namespace Domain.Entities;
 
 public partial class Lesson : BaseFullEntity
 {
+    public int CurriculumId { get; set; }
+    public Curriculum Curriculum { get; set; } = null!;
+
     public int CourseId { get; set; }
     public Course Course { get; set; } = null!;
 
@@ -15,4 +18,3 @@ public partial class Lesson : BaseFullEntity
 
     public bool IsFreePreview { get; set; }
 }
-

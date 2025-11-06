@@ -1,4 +1,6 @@
-﻿using Domain.Common;
+﻿using System.Collections.Generic;
+using Domain.Common;
+using Domain.Enums;
 
 namespace Domain.Entities;
 
@@ -7,6 +9,10 @@ public partial class Course : BaseFullEntity
     public string Title { get; set; } = null!;
 
     public string? Description { get; set; }
+
+    public string? Info { get; set; }
+
+    public SubjectGroup SubjectGroup { get; set; } = SubjectGroup.None;
 
     public string? Level { get; set; }
 
@@ -24,5 +30,5 @@ public partial class Course : BaseFullEntity
 
     public virtual ICollection<CoursePackage> Packages { get; set; } = new List<CoursePackage>();
 
-    public virtual ICollection<Lesson> Lessons { get; set; } = new List<Lesson>();
+    public virtual ICollection<Curriculum> Curricula { get; set; } = new List<Curriculum>();
 }
