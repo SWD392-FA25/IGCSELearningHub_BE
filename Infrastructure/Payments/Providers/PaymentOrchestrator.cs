@@ -36,6 +36,8 @@ namespace Infrastructure.Payments.Providers
 
         public async Task<PaymentCheckoutDTO> CreateCheckoutAsync(CreatePaymentCommand command, CancellationToken ct = default)
         {
+            ct.ThrowIfCancellationRequested();
+
             var order = await _uow.OrderRepository.GetByIdAsync(command.OrderId);
             if (order is null) throw new InvalidOperationException("OrderIndex not found.");
 
@@ -43,14 +45,6 @@ namespace Infrastructure.Payments.Providers
             if (amountVnd <= 0) throw new InvalidOperationException("Invalid order amount.");
 
             var method = await EnsureVnPayMethodAsync(ct);
-            var payment = new Payment
-            {
-                OrderId = order.Id,
-                PaymentMethodId = method.Id,
-                Amount = amountVnd,
-                Status = PaymentStatus.Pending
-            };
-            await _uow.PaymentRepository.AddAsync(payment);
 
             var ip = command.ClientIp;
             try
@@ -63,18 +57,37 @@ namespace Infrastructure.Payments.Providers
             var vnGateway = _gateway as VnPayPaymentGateway
                 ?? throw new InvalidOperationException("VNPay gateway required.");
 
-            var checkout = await vnGateway.CreateCheckoutUrlInternalAsync(
-                orderId: order.Id,
-                amountVnd: amountVnd,
-                clientIp: ip,
-                bankCode: command.BankCode,
-                orderDesc: command.OrderDescription,
-                orderTypeCode: command.OrderTypeCode,
-                ct: ct
-            );
+            await using var transaction = await _uow.BeginTransactionAsync();
+            try
+            {
+                var payment = new Payment
+                {
+                    OrderId = order.Id,
+                    PaymentMethodId = method.Id,
+                    Amount = amountVnd,
+                    Status = PaymentStatus.Pending
+                };
+                await _uow.PaymentRepository.AddAsync(payment);
+                await _uow.SaveChangesAsync();
 
-            await _uow.SaveChangesAsync();
-            return checkout;
+                var checkout = await vnGateway.CreateCheckoutUrlInternalAsync(
+                    orderId: order.Id,
+                    amountVnd: amountVnd,
+                    clientIp: ip,
+                    bankCode: command.BankCode,
+                    orderDesc: command.OrderDescription,
+                    orderTypeCode: command.OrderTypeCode,
+                    ct: ct
+                );
+
+                await transaction.CommitAsync();
+                return checkout;
+            }
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
         }
 
         public async Task<PaymentResultDTO> HandleCallbackAsync(IQueryCollection query, CancellationToken ct = default)
@@ -112,9 +125,19 @@ namespace Infrastructure.Payments.Providers
             {
                 if (pendingPayment != null)
                 {
-                    pendingPayment.Status = PaymentStatus.Canceled;
-                    _uow.PaymentRepository.Update(pendingPayment);
-                    await _uow.SaveChangesAsync();
+                    await using var failureTx = await _uow.BeginTransactionAsync();
+                    try
+                    {
+                        pendingPayment.Status = PaymentStatus.Canceled;
+                        _uow.PaymentRepository.Update(pendingPayment);
+                        await _uow.SaveChangesAsync();
+                        await failureTx.CommitAsync();
+                    }
+                    catch
+                    {
+                        await failureTx.RollbackAsync();
+                        throw;
+                    }
                 }
                 else
                 {
@@ -123,28 +146,38 @@ namespace Infrastructure.Payments.Providers
                 return result;
             }
 
-            // Success path
-            var payment = pendingPayment;
-            if (payment is null)
+            await using var transaction = await _uow.BeginTransactionAsync();
+            try
             {
-                var method = await EnsureVnPayMethodAsync(ct);
-                payment = new Payment
+                // Success path
+                var payment = pendingPayment;
+                if (payment is null)
                 {
-                    OrderId = order.Id,
-                    PaymentMethodId = method.Id,
-                    Amount = result.Amount,
-                    Status = PaymentStatus.Pending
-                };
-                await _uow.PaymentRepository.AddAsync(payment);
+                    var method = await EnsureVnPayMethodAsync(ct);
+                    payment = new Payment
+                    {
+                        OrderId = order.Id,
+                        PaymentMethodId = method.Id,
+                        Amount = result.Amount,
+                        Status = PaymentStatus.Pending
+                    };
+                    await _uow.PaymentRepository.AddAsync(payment);
+                }
+
+                payment.Status = PaymentStatus.Paid;
+                payment.PaidDate = DateTime.UtcNow;
+                _uow.PaymentRepository.Update(payment);
+                order.Status = OrderStatus.Paid;
+                _uow.OrderRepository.Update(order);
+
+                await _uow.SaveChangesAsync();
+                await transaction.CommitAsync();
             }
-
-            payment.Status = PaymentStatus.Paid;
-            payment.PaidDate = DateTime.UtcNow;
-            _uow.PaymentRepository.Update(payment);
-            order.Status = OrderStatus.Paid;
-            _uow.OrderRepository.Update(order);
-
-            await _uow.SaveChangesAsync();
+            catch
+            {
+                await transaction.RollbackAsync();
+                throw;
+            }
 
             if (_enrollmentService != null)
             {

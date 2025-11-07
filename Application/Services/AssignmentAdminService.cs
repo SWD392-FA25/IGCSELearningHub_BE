@@ -5,6 +5,7 @@ using Application.Extensions;
 using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Application.Mapping;
 
 namespace Application.Services
 {
@@ -40,14 +41,7 @@ namespace Application.Services
                 _ => query.OrderByDescending(a => a.CreatedAt)
             };
 
-            return await query.ToPagedResultAsync(page, pageSize, a => new AssignmentAdminListItemDTO
-            {
-                Id = a.Id,
-                CourseId = a.CourseId,
-                Title = a.Title,
-                CreatedAt = a.CreatedAt,
-                SubmissionCount = a.Submissions.Count(x => !x.IsDeleted)
-            });
+            return await query.ToPagedResultAsync(page, pageSize, AssignmentProjections.AdminListItem);
         }
 
         public async Task<Result<AssignmentAdminDetailDTO>> GetDetailAsync(int assignmentId)
@@ -133,14 +127,7 @@ namespace Application.Services
                 .Where(s => s.AssignmentId == assignmentId)
                 .OrderByDescending(s => s.SubmittedDate);
 
-            return await query.ToPagedResultAsync(page, pageSize, s => new SubmissionListItemDTO
-            {
-                SubmissionId = s.Id,
-                AccountId = s.AccountId,
-                AccountUserName = s.Account.UserName,
-                Score = s.Score,
-                SubmittedDate = s.SubmittedDate
-            });
+            return await query.ToPagedResultAsync(page, pageSize, AssignmentProjections.SubmissionListItem);
         }
 
         public async Task<Result<SubmissionDetailDTO>> GetSubmissionDetailAsync(int submissionId)

@@ -12,6 +12,7 @@ namespace Application.Authentication.Interfaces
     {
         Task<Result<AuthenticatedUserDTO>> RegisterAsync(AccountRegistrationDTO registrationDto);
         Task<Result<AuthenticatedUserDTO>> LoginAsync(AccountLoginDTO loginDto);
+        Task<Result<AuthenticatedUserDTO>> LoginWithFirebaseAsync(FirebaseLoginRequestDTO dto);
         Task<Result<AuthenticatedUserDTO>> RefreshAsync(RefreshTokenRequestDTO request, string? ipAddress = null);
     }
 }

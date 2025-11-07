@@ -4,6 +4,10 @@ using Application.Extensions;
 using AutoMapper;
 using Microsoft.Extensions.Logging;
 using Application.DTOs.Accounts;
+using Application.Utils.Interfaces;
+using System.Security.Cryptography;
+using System.Text;
+using System.Threading;
 
 namespace Application.Services
 {
@@ -12,15 +16,18 @@ namespace Application.Services
         private readonly IUnitOfWork _unitOfWork;
         private readonly ILogger<AccountService> _logger;
         private readonly IMapper _mapper;
+        private readonly IEmailSender _emailSender;
 
         public AccountService(
             IUnitOfWork unitOfWork,
             ILogger<AccountService> logger,
-            IMapper mapper)
+            IMapper mapper,
+            IEmailSender emailSender)
         {
             _unitOfWork = unitOfWork;
             _logger = logger;
             _mapper = mapper;
+            _emailSender = emailSender;
         }
 
         public async Task<Result<AccountDTO>> GetAccountByIdAsync(int id)
@@ -62,7 +69,6 @@ namespace Application.Services
                 query = query.Where(a => (a.Status ?? "").ToLower() == s);
             }
 
-            // sort: createdAt_desc (default) | createdAt_asc | name_asc|name_desc | email_asc|email_desc
             query = (sort ?? "").ToLower() switch
             {
                 "createdat_asc" => query.OrderBy(a => a.CreatedAt),
@@ -78,7 +84,6 @@ namespace Application.Services
 
         public async Task<Result<bool>> CheckUsernameOrEmailExistsAsync(string username, string email)
         {
-            // sửa lại thứ tự đúng (username, email)
             var existedAccount = await _unitOfWork.AccountRepository.GetByUsernameOrEmail(email, username);
             return Result<bool>.Success(existedAccount != null,
                 existedAccount != null ? "Username or Email already exists." : "Username or Email does not exist.");
@@ -113,6 +118,9 @@ namespace Application.Services
             if (account == null)
                 return Result<string>.Fail("Account with the given email or username does not exist.", 400);
 
+            if (account.IsExternal && !string.IsNullOrWhiteSpace(account.ExternalProvider))
+                return Result<string>.Fail("Tài khoản này chỉ có thể đăng nhập bằng Google.", 400);
+
             if (dto.NewPassword != dto.ConfirmNewPassword)
                 return Result<string>.Fail("New password and confirmation do not match.", 400);
 
@@ -122,6 +130,85 @@ namespace Application.Services
             await _unitOfWork.SaveChangesAsync();
 
             return Result<string>.Success("Password reset successfully.");
+        }
+
+        public async Task<Result<string>> SendPasswordResetEmailAsync(ForgotPasswordRequestDTO dto, string origin, CancellationToken ct = default)
+        {
+            if (string.IsNullOrWhiteSpace(dto.Email))
+                return Result<string>.Fail("Email is required.", 400);
+
+            var account = await _unitOfWork.AccountRepository.GetByUsernameOrEmail(dto.Email, dto.Email);
+            if (account == null)
+            {
+                return Result<string>.Success(GenericPasswordResetResponse);
+            }
+
+            if (account.IsExternal && !string.IsNullOrWhiteSpace(account.ExternalProvider))
+            {
+                return Result<string>.Fail("Tài khoản này chỉ có thể đăng nhập bằng Google.", 400);
+            }
+
+            var originalPassword = account.Password;
+            var temporaryPassword = GenerateTemporaryPassword();
+            account.Password = BCrypt.Net.BCrypt.HashPassword(temporaryPassword, workFactor: 12);
+
+            _unitOfWork.AccountRepository.Update(account);
+            await _unitOfWork.SaveChangesAsync();
+
+            var subject = "IGCSE Learning Hub - Password Reset";
+            var body = BuildResetEmailBody(account.FullName, account.UserName, temporaryPassword, BuildResetUrl(origin));
+
+            try
+            {
+                await _emailSender.SendAsync(account.Email, subject, body, ct);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to send password reset email to {Email}", account.Email);
+                account.Password = originalPassword;
+                _unitOfWork.AccountRepository.Update(account);
+                await _unitOfWork.SaveChangesAsync();
+                return Result<string>.Fail("Failed to send password reset email. Please try again later.", 500);
+            }
+
+            return Result<string>.Success(GenericPasswordResetResponse);
+        }
+
+        private const string GenericPasswordResetResponse = "If an account exists for the provided email, a reset email has been sent.";
+
+        private static string GenerateTemporaryPassword(int length = 12)
+        {
+            const string allowed = "ABCDEFGHJKLMNOPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz0123456789@$!%*?&";
+            var bytes = RandomNumberGenerator.GetBytes(length);
+            var chars = new char[length];
+            for (int i = 0; i < length; i++)
+            {
+                chars[i] = allowed[bytes[i] % allowed.Length];
+            }
+            return new string(chars);
+        }
+
+        private static string BuildResetUrl(string origin)
+        {
+            if (string.IsNullOrWhiteSpace(origin)) return string.Empty;
+            return $"{origin.TrimEnd('/')}/reset-password";
+        }
+
+        private static string BuildResetEmailBody(string? fullName, string userName, string tempPassword, string resetUrl)
+        {
+            var displayName = string.IsNullOrWhiteSpace(fullName) ? userName : fullName;
+            var sb = new StringBuilder();
+            sb.AppendLine($"<p>Hi {displayName},</p>");
+            sb.AppendLine("<p>We received a request to reset your password. Use the temporary password below to sign in and change it immediately:</p>");
+            sb.AppendLine($"<p><strong>Temporary password:</strong> {tempPassword}</p>");
+            sb.AppendLine("<p>After signing in, please update your password from your profile page.</p>");
+            if (!string.IsNullOrWhiteSpace(resetUrl))
+            {
+                sb.AppendLine($"<p>You can access the reset page here: <a href=\"{resetUrl}\">{resetUrl}</a></p>");
+            }
+            sb.AppendLine("<p>If you didn’t request a reset, you can ignore this email. Your password will remain unchanged, but we recommend updating it if you have any concerns.</p>");
+            sb.AppendLine("<p>Best regards,<br/>IGCSE Learning Hub Team</p>");
+            return sb.ToString();
         }
 
         public async Task<Result<string>> BanAccountAsync(int accountId)

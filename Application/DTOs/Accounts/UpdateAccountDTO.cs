@@ -1,16 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace Application.DTOs.Accounts
 {
     public class UpdateAccountDTO
     {
-        public string? FullName { get; set; }
+        [Required(AllowEmptyStrings = false)]
+        public string FullName { get; set; } = string.Empty;
+
+        [Phone]
         public string? PhoneNumber { get; set; }
-        public string? UserName { get; set; }
-        public string? Email { get; set; }
+
+        [Required(AllowEmptyStrings = false)]
+        [MinLength(3)]
+        public string UserName { get; set; } = string.Empty;
+
+        [Required]
+        [EmailAddress]
+        public string Email { get; set; } = string.Empty;
     }
 }

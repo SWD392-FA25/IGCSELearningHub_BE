@@ -25,6 +25,8 @@ public partial class Account : BaseFullEntity
 
     public string? ExternalProvider { get; set; }
 
+    public string? ExternalId { get; set; }
+
     public virtual ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();
 
     public virtual ICollection<LivestreamRegistration> LivestreamRegistrations { get; set; } = new List<LivestreamRegistration>();
