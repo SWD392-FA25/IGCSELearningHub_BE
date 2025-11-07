@@ -1,9 +1,14 @@
 using Application.DTOs.Analytics;
+using Application.Extensions;
 using Application.Services.Interfaces;
 using Application.Wrappers;
 using Application.Utils.Interfaces;
+using Application.Utils;
 using Domain.Entities;
 using Domain.Enums;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -206,31 +211,32 @@ namespace Application.Services
                                                .Select(d => new { d.ItemId, d.Price }));
 
             var grouped = details.GroupBy(x => x.ItemId)
-                .Select(g => new { CourseId = g.Key, Revenue = g.Sum(x => x.Price), Orders = g.Count() });
+                .Select(g => new CourseRevenueAggregate(g.Key, g.Sum(x => x.Price), g.Count()));
 
-            var total = await grouped.CountAsync();
+            var ordered = grouped.OrderByDescending(x => x.Revenue);
+            var pageResult = await ordered.ToPagedResultAsync(page, pageSize);
+            var pageData = pageResult.Data?.ToList() ?? new List<CourseRevenueAggregate>();
 
-            var pageData = await grouped
-                .OrderByDescending(x => x.Revenue)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
+            var mapped = await QueryLookupHelper.MapWithTitlesAsync(
+                pageData,
+                _uow.CourseRepository.GetAllQueryable(),
+                agg => agg.CourseId,
+                c => c.Id,
+                c => c.Title,
+                (agg, title) => new TopCourseRevenueItemDTO
+                {
+                    CourseId = agg.CourseId,
+                    Title = title,
+                    Revenue = agg.Revenue,
+                    Orders = agg.Orders
+                },
+                "Course #{0}");
 
-            var courseIds = pageData.Select(x => x.CourseId).Distinct().ToList();
-            var courseTitles = await _uow.CourseRepository.GetAllQueryable()
-                .Where(c => courseIds.Contains(c.Id))
-                .Select(c => new { c.Id, c.Title })
-                .ToDictionaryAsync(x => x.Id, x => x.Title);
-
-            var pageDataWithTitles = pageData.Select(x => new TopCourseRevenueItemDTO
-            {
-                CourseId = x.CourseId,
-                Title = courseTitles.TryGetValue(x.CourseId, out var t) ? t : $"Course #{x.CourseId}",
-                Revenue = x.Revenue,
-                Orders = x.Orders
-            }).ToList();
-
-            return PagedResult<TopCourseRevenueItemDTO>.Success(pageDataWithTitles, total, page, pageSize);
+            return PagedResult<TopCourseRevenueItemDTO>.Success(
+                mapped,
+                pageResult.TotalCount,
+                pageResult.PageNumber,
+                pageResult.PageSize);
         }
 
         public async Task<PagedResult<TopCourseEnrollmentItemDTO>> GetTopCoursesByEnrollmentsAsync(DateRangeQuery q, int page, int pageSize)
@@ -243,23 +249,18 @@ namespace Application.Services
                 .Where(e => !e.IsDeleted && e.EnrollmentDate >= from && e.EnrollmentDate <= to);
 
             var grouped = enrolls.GroupBy(e => new { e.CourseId, e.Course.Title })
-                .Select(g => new { g.Key.CourseId, g.Key.Title, Enrollments = g.Count() });
+                .Select(g => new CourseEnrollmentAggregate(g.Key.CourseId, g.Key.Title, g.Count()));
 
-            var total = await grouped.CountAsync();
-
-            var pageData = await grouped
-                .OrderByDescending(x => x.Enrollments)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .Select(x => new TopCourseEnrollmentItemDTO
+            var ordered = grouped.OrderByDescending(x => x.Enrollments);
+            return await ordered.ToPagedResultAsync(
+                page,
+                pageSize,
+                x => new TopCourseEnrollmentItemDTO
                 {
                     CourseId = x.CourseId,
                     Title = x.Title,
                     Enrollments = x.Enrollments
-                })
-                .ToListAsync();
-
-            return PagedResult<TopCourseEnrollmentItemDTO>.Success(pageData, total, page, pageSize);
+                });
         }
 
         public async Task<PagedResult<TopLivestreamRevenueItemDTO>> GetTopLivestreamsByRevenueAsync(DateRangeQuery q, int page, int pageSize)
@@ -276,31 +277,36 @@ namespace Application.Services
                                                .Select(d => new { d.ItemId, d.Price }));
 
             var grouped = details.GroupBy(x => x.ItemId)
-                .Select(g => new { LivestreamId = g.Key, Revenue = g.Sum(x => x.Price), Orders = g.Count() });
+                .Select(g => new LivestreamRevenueAggregate(g.Key, g.Sum(x => x.Price), g.Count()));
 
-            var total = await grouped.CountAsync();
+            var ordered = grouped.OrderByDescending(x => x.Revenue);
+            var pageResult = await ordered.ToPagedResultAsync(page, pageSize);
+            var pageData = pageResult.Data?.ToList() ?? new List<LivestreamRevenueAggregate>();
 
-            var pageData = await grouped
-                .OrderByDescending(x => x.Revenue)
-                .Skip((page - 1) * pageSize)
-                .Take(pageSize)
-                .ToListAsync();
+            var mapped = await QueryLookupHelper.MapWithTitlesAsync(
+                pageData,
+                _uow.LivestreamRepository.GetAllQueryable(),
+                agg => agg.LivestreamId,
+                l => l.Id,
+                l => l.Title,
+                (agg, title) => new TopLivestreamRevenueItemDTO
+                {
+                    LivestreamId = agg.LivestreamId,
+                    Title = title,
+                    Revenue = agg.Revenue,
+                    Orders = agg.Orders
+                },
+                "Livestream #{0}");
 
-            var livestreamIds = pageData.Select(x => x.LivestreamId).Distinct().ToList();
-            var livestreamTitles = await _uow.LivestreamRepository.GetAllQueryable()
-                .Where(l => livestreamIds.Contains(l.Id))
-                .Select(l => new { l.Id, l.Title })
-                .ToDictionaryAsync(x => x.Id, x => x.Title);
-
-            var pageDataWithTitles = pageData.Select(x => new TopLivestreamRevenueItemDTO
-            {
-                LivestreamId = x.LivestreamId,
-                Title = livestreamTitles.TryGetValue(x.LivestreamId, out var t) ? t : $"Livestream #{x.LivestreamId}",
-                Revenue = x.Revenue,
-                Orders = x.Orders
-            }).ToList();
-
-            return PagedResult<TopLivestreamRevenueItemDTO>.Success(pageDataWithTitles, total, page, pageSize);
+            return PagedResult<TopLivestreamRevenueItemDTO>.Success(
+                mapped,
+                pageResult.TotalCount,
+                pageResult.PageNumber,
+                pageResult.PageSize);
         }
+
+        private sealed record CourseRevenueAggregate(int CourseId, decimal Revenue, int Orders);
+        private sealed record CourseEnrollmentAggregate(int CourseId, string Title, int Enrollments);
+        private sealed record LivestreamRevenueAggregate(int LivestreamId, decimal Revenue, int Orders);
     }
 }

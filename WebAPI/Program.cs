@@ -1,5 +1,8 @@
+using Application;
 using Asp.Versioning;
 using Asp.Versioning.ApiExplorer;
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
 using Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -97,6 +100,7 @@ namespace WebAPI
                     options.SubstituteApiVersionInUrl = true;
                 });
 
+                builder.Services.AddApplication();
                 builder.Services.AddInfrastructureServices(builder.Configuration);
                 builder.Services.AddPaymentServices(builder.Configuration);
 

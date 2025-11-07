@@ -1,6 +1,6 @@
 ﻿using Application.DTOs.Accounts;
-
 using Application.Wrappers;
+using System.Threading;
 
 namespace Application.Services.Interfaces
 {
@@ -12,6 +12,7 @@ namespace Application.Services.Interfaces
         Task<Result<bool>> CheckUsernameOrEmailExistsAsync(string username, string email);
         Task<Result<AccountDTO?>> UpdateAccountAsync(int accountId, UpdateAccountDTO updateDto);
         Task<Result<string>> ResetPasswordAsync(ResetPasswordDTO dto);
+        Task<Result<string>> SendPasswordResetEmailAsync(ForgotPasswordRequestDTO dto, string origin, CancellationToken ct = default);
         Task<Result<string>> BanAccountAsync(int accountId);
         Task<Result<string>> UnbanAccountAsync(int accountId);
     }

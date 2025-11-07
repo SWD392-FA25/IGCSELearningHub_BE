@@ -2,10 +2,12 @@
 using Application.Wrappers;
 using Application.Extensions;
 using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using Domain.Entities;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using Application.DTOs.Quiz;
+using Application.Mapping;
 
 
 namespace Application.Services
@@ -29,50 +31,20 @@ namespace Application.Services
             if (courseId.HasValue) query = query.Where(x => x.CourseId == courseId.Value);
 
             query = query.OrderByDescending(x => x.CreatedAt);
-            return await query.ToPagedResultAsync(page, pageSize, x => new QuizSummaryDTO 
-            {
-                Id = x.Id,
-                CourseId = x.CourseId,
-                Title = x.Title,
-                TotalQuestions = x.TotalQuestions ?? 0,
-                CreatedAt = x.CreatedAt
-            });
+            return await query.ToPagedResultAsync(page, pageSize, QuizProjections.Summary);
         }
 
         public async Task<Result<QuizDetailDTO>> GetDetailAsync(int quizId)
         {
-            var quiz = await _uow.QuizRepository.GetAllQueryable(nameof(Quiz.QuizQuestions) + "," +
-                                                                 nameof(Quiz.QuizQuestions) + "." + nameof(QuizQuestion.Question) + "," +
-                                                                 nameof(Quiz.QuizQuestions) + "." + nameof(QuizQuestion.Question) + "." + nameof(Question.QuestionOptions))
-                .FirstOrDefaultAsync(x => x.Id == quizId);
-            if (quiz == null) return Result<QuizDetailDTO>.Fail("Quiz not found.", 404);
+            var dto = await _uow.QuizRepository.GetAllQueryable()
+                .Where(x => x.Id == quizId)
+                .ProjectTo<QuizDetailDTO>(_mapper.ConfigurationProvider)
+                .FirstOrDefaultAsync();
 
-            var dto = new QuizDetailDTO
+            if (dto == null)
             {
-                Id = quiz.Id,
-                CourseId = quiz.CourseId,
-                Title = quiz.Title,
-                TotalQuestions = quiz.TotalQuestions ?? 0,
-                CreatedAt = quiz.CreatedAt,
-                RandomizeQuestions = false, // nếu bạn có field thì map vào
-                RandomizeOptions = false,
-                Questions = quiz.QuizQuestions.OrderBy(q => q.OrderIndex).Select(qq => new QuizDetailQuestionDTO
-                {
-                    QuestionId = qq.QuestionId,
-                    OrderIndex = qq.OrderIndex,
-                    Points = qq.Points,
-                    Stem = qq.Question.Stem,
-                    Explanation = qq.Question.Explanation,
-                    Difficulty = qq.Question.Difficulty,
-                    Type = qq.Question.Type,
-                    Options = qq.Question.QuestionOptions.Select(op => new QuizDetailOptionDTO
-                    {
-                        OptionId = op.Id,
-                        Text = op.OptionText,
-                        IsCorrect = op.IsCorrect
-                    }).ToList()
-                }).ToList()
-            };
+                return Result<QuizDetailDTO>.Fail("Quiz not found.", 404);
+            }
 
             return Result<QuizDetailDTO>.Success(dto, statusCode: 200);
         }

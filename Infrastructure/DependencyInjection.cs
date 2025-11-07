@@ -1,18 +1,22 @@
 ﻿using Application;
-using Application.Authentication;
 using Application.Authentication.Interfaces;
-using Application.Payments.Interfaces;
-using Application.Payments.Services;
 using Application.IRepository;
-using Application.Services;
-using Application.Services.Interfaces;
 using Application.Utils;
 using Application.Utils.Interfaces;
+using FirebaseAdmin;
+using FirebaseAdmin.Auth;
+using Google.Apis.Auth.OAuth2;
+using Infrastructure.Authentication;
 using Infrastructure.Data;
+using Infrastructure.Email;
 using Infrastructure.Repository;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using System;
+using System.IO;
 
 namespace Infrastructure
 {
@@ -21,7 +25,50 @@ namespace Infrastructure
         public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration config)
         {
             services.AddScoped<IUnitOfWork, UnitOfWork>();
-            services.AddAutoMapper(cfg => { }, AppDomain.CurrentDomain.GetAssemblies());
+            services.Configure<EmailOptions>(config.GetSection("Email"));
+            services.AddTransient<IEmailSender, MailKitEmailSender>();
+            services.AddSingleton(provider =>
+            {
+                if (FirebaseApp.DefaultInstance != null)
+                {
+                    return FirebaseApp.DefaultInstance;
+                }
+
+                var logger = provider.GetRequiredService<ILoggerFactory>().CreateLogger("FirebaseInit");
+                var inlineCredentials = Environment.GetEnvironmentVariable("FIREBASE_CREDENTIALS");
+                GoogleCredential credential;
+
+                if (!string.IsNullOrWhiteSpace(inlineCredentials))
+                {
+                    credential = GoogleCredential.FromJson(inlineCredentials);
+                    logger.LogInformation("🔥 Firebase credentials loaded from environment variable.");
+                }
+                else
+                {
+                    var env = provider.GetRequiredService<IHostEnvironment>();
+                    var firebaseSection = config.GetSection("Firebase");
+                    var credentialsPath = firebaseSection.GetValue<string>("CredentialsPath")
+                                           ?? "Infrastructure/Firebase/igcse-learning-hub-firebase-adminsdk.json";
+                    if (!Path.IsPathRooted(credentialsPath))
+                    {
+                        credentialsPath = Path.Combine(env.ContentRootPath, credentialsPath);
+                    }
+                    credential = GoogleCredential.FromFile(credentialsPath);
+                    logger.LogInformation("🔥 Firebase credentials loaded from local file: {Path}", credentialsPath);
+                }
+
+                var options = new AppOptions
+                {
+                    Credential = credential
+                };
+                return FirebaseApp.Create(options);
+            });
+            services.AddSingleton(provider =>
+            {
+                var app = provider.GetRequiredService<FirebaseApp>();
+                return FirebaseAuth.GetAuth(app);
+            });
+            services.AddSingleton<IExternalAuthProvider, FirebaseExternalAuthProvider>();
             services.AddDbContext<AppDbContext>(opt => opt.UseSqlServer(config.GetConnectionString("IGCSELearningHub_DB")));
 
             #region repo config
@@ -48,37 +95,6 @@ namespace Infrastructure
             services.AddScoped<IProgressRepository, ProgressRepository>();
             services.AddScoped<ISubmissionRepository, SubmissionRepository>();
             services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
-            #endregion
-
-            #region service config
-            services.AddScoped<IAuthenticationService, AuthenticationService>();
-            services.AddScoped<IAccessTokenFactory, AccessTokenFactory>();
-            services.AddScoped<IRefreshTokenManager, RefreshTokenManager>();
-            services.AddScoped<ITokenService, TokenService>();
-            services.AddScoped<IDateTimeProvider, DateTimeProvider>();
-            services.AddScoped<IAccountService, AccountService>();
-            services.AddScoped<IQuizService, QuizService>();
-            services.AddScoped<IQuizTakingService, QuizTakingService>();
-            services.AddScoped<ICourseCatalogService, CourseCatalogService>();
-            services.AddScoped<ICourseAdminService, CourseAdminService>();
-            services.AddScoped<IAssignmentAdminService, AssignmentAdminService>();
-            services.AddScoped<ILivestreamAdminService, LivestreamAdminService>();
-            services.AddScoped<ICoursePackageAdminService, CoursePackageAdminService>();
-            services.AddScoped<IEnrollmentAdminService, EnrollmentAdminService>();
-            services.AddScoped<ILessonAdminService, LessonAdminService>();
-            services.AddScoped<IEnrollmentStudentService, EnrollmentStudentService>();
-            services.AddScoped<IAssignmentStudentService, AssignmentStudentService>();
-            services.AddScoped<ILessonStudentService, LessonStudentService>();
-            services.AddScoped<IUnitService, UnitService>();
-            services.AddScoped<IStudentSubmissionService, StudentSubmissionService>();
-            services.AddScoped<IOrderService, OrderService>();
-            services.AddScoped<IOrderQueryService, OrderQueryService>();
-            services.AddScoped<IProgressService, ProgressService>();
-            services.AddScoped<IAnalyticsService, AnalyticsService>();
-            services.AddScoped<ILivestreamPublicService, LivestreamPublicService>();
-            services.AddScoped<ICoursePackagePublicService, CoursePackagePublicService>();
-            services.AddScoped<ILessonPublicService, LessonPublicService>();
-            services.AddScoped<IPaymentMethodService, PaymentMethodService>();
             #endregion
 
             #region quartz config

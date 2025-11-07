@@ -361,3 +361,6 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# Ignore Firebase service account keys
+**/igcse-learning-hub-firebase-adminsdk*.json

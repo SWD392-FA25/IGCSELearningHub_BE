@@ -4,6 +4,7 @@ using Application.Services.Interfaces;
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Threading;
 
 namespace WebAPI.Controllers
 {
@@ -87,6 +88,24 @@ namespace WebAPI.Controllers
             }
 
             var result = await _accountService.ResetPasswordAsync(dto);
+            return StatusCode(result.StatusCode, result);
+        }
+
+        [HttpPost("forgot-password")]
+        [AllowAnonymous]
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordRequestDTO dto, CancellationToken ct)
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.ToDictionary(
+                    x => x.Key,
+                    x => x.Value.Errors.FirstOrDefault()?.ErrorMessage ?? "Invalid");
+                throw new ValidationException(errors);
+            }
+
+            var origin = Request.Headers.Origin.FirstOrDefault()
+                         ?? $"{Request.Scheme}://{Request.Host}";
+            var result = await _accountService.SendPasswordResetEmailAsync(dto, origin, ct);
             return StatusCode(result.StatusCode, result);
         }
 

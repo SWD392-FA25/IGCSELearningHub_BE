@@ -59,6 +59,22 @@ namespace WebAPI.Controllers
             return StatusCode(result.StatusCode, result);
         }
 
+        [HttpPost("google-login")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GoogleLogin([FromBody] FirebaseLoginRequestDTO dto)
+        {
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.ToDictionary(
+                    x => x.Key,
+                    x => x.Value.Errors.FirstOrDefault()?.ErrorMessage ?? "Invalid");
+                throw new ValidationException(errors);
+            }
+
+            var result = await _authenticationService.LoginWithFirebaseAsync(dto);
+            return StatusCode(result.StatusCode, result);
+        }
+
         [HttpPost("refresh")]
         [AllowAnonymous]
         public async Task<IActionResult> Refresh([FromBody] RefreshTokenRequestDTO dto)
