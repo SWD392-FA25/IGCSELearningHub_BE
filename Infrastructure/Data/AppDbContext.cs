@@ -62,6 +62,8 @@ public partial class AppDbContext : DbContext
 
     public virtual DbSet<RefreshToken> RefreshTokens { get; set; }
 
+    public virtual DbSet<Device> Devices { get; set; }
+
     protected override void ConfigureConventions(ModelConfigurationBuilder builder)
     {
         builder.Properties<decimal>().HavePrecision(18, 2);

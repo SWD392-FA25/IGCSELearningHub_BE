@@ -3111,6 +3111,67 @@ namespace Infrastructure.Migrations
                     b.ToTable("CoursePackages");
                 });
 
+            modelBuilder.Entity("Domain.Entities.Device", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AccountId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("AppVersion")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DeviceName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DeviceToken")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DeviceType")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastSeenAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("ModifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("ModifiedBy")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("OsVersion")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId");
+
+                    b.ToTable("Devices");
+                });
+
             modelBuilder.Entity("Domain.Entities.Enrollment", b =>
                 {
                     b.Property<int>("Id")
@@ -17062,6 +17123,17 @@ namespace Infrastructure.Migrations
                     b.Navigation("SelectedOption");
                 });
 
+            modelBuilder.Entity("Domain.Entities.Device", b =>
+                {
+                    b.HasOne("Domain.Entities.Account", "Account")
+                        .WithMany("Devices")
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Account");
+                });
+
             modelBuilder.Entity("Domain.Entities.Enrollment", b =>
                 {
                     b.HasOne("Domain.Entities.Account", "Account")
@@ -17327,6 +17399,8 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.Account", b =>
                 {
+                    b.Navigation("Devices");
+
                     b.Navigation("Enrollments");
 
                     b.Navigation("LivestreamRegistrations");
