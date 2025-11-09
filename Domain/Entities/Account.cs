@@ -38,4 +38,6 @@ public partial class Account : BaseFullEntity
     public virtual ICollection<QuizAttempt> QuizAttempts { get; set; } = new List<QuizAttempt>();
 
     public virtual ICollection<Submission> Submissions { get; set; } = new List<Submission>();
+
+    public virtual ICollection<Device> Devices { get; set; } = new List<Device>();
 }
