@@ -1,5 +1,6 @@
 using Application.DTOs.Accounts;
 using Application.DTOs.Authentication;
+using Application.DTOs.Devices;
 using Application.DTOs.Quiz;
 using AutoMapper;
 using Domain.Entities;
@@ -13,6 +14,7 @@ namespace Application.Mapping
         {
             ConfigureAccounts();
             ConfigureQuizzes();
+            ConfigureDevices();
         }
 
         private void ConfigureAccounts()
@@ -50,6 +52,11 @@ namespace Application.Mapping
                 .ForMember(dest => dest.RandomizeQuestions, opt => opt.MapFrom(_ => false))
                 .ForMember(dest => dest.RandomizeOptions, opt => opt.MapFrom(_ => false))
                 .ForMember(dest => dest.Questions, opt => opt.MapFrom(src => src.QuizQuestions.OrderBy(q => q.OrderIndex)));
+        }
+
+        private void ConfigureDevices()
+        {
+            CreateMap<Device, DeviceDTO>();
         }
     }
 }
