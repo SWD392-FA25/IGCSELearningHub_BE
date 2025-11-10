@@ -1,22 +1,23 @@
 ﻿using Application;
 using Application.Authentication.Interfaces;
 using Application.IRepository;
+using Application.Notifications;
 using Application.Utils;
 using Application.Utils.Interfaces;
 using FirebaseAdmin;
 using FirebaseAdmin.Auth;
+using FirebaseAdmin.Messaging;
 using Google.Apis.Auth.OAuth2;
 using Infrastructure.Authentication;
 using Infrastructure.Data;
 using Infrastructure.Email;
+using Infrastructure.Notifications;
 using Infrastructure.Repository;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using System;
-using System.IO;
 
 namespace Infrastructure
 {
@@ -68,6 +69,13 @@ namespace Infrastructure
                 var app = provider.GetRequiredService<FirebaseApp>();
                 return FirebaseAuth.GetAuth(app);
             });
+            services.AddSingleton(provider =>
+            {
+                var app = provider.GetRequiredService<FirebaseApp>();
+                return FirebaseMessaging.GetMessaging(app);
+            });
+            services.AddSingleton<IPushNotificationService, FirebasePushNotificationService>();
+            services.AddSingleton<IPaymentRealtimeNotifier, NoOpPaymentRealtimeNotifier>();
             services.AddSingleton<IExternalAuthProvider, FirebaseExternalAuthProvider>();
             services.AddDbContext<AppDbContext>(opt => opt.UseSqlServer(config.GetConnectionString("IGCSELearningHub_DB")));
 
@@ -95,6 +103,7 @@ namespace Infrastructure
             services.AddScoped<IProgressRepository, ProgressRepository>();
             services.AddScoped<ISubmissionRepository, SubmissionRepository>();
             services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+            services.AddScoped<IDeviceRepository, DeviceRepository>();
             #endregion
 
             #region quartz config

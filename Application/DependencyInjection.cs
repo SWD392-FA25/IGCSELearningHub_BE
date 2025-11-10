@@ -46,6 +46,7 @@ namespace Application
             services.AddScoped<ICoursePackagePublicService, CoursePackagePublicService>();
             services.AddScoped<ILessonPublicService, LessonPublicService>();
             services.AddScoped<IPaymentMethodService, PaymentMethodService>();
+            services.AddScoped<IDeviceService, DeviceService>();
 
             return services;
         }

@@ -1,4 +1,5 @@
 ﻿using Application;
+using Application.Notifications;
 using Application.Payments.DTOs;
 using Application.Payments.Helpers;
 using Application.Payments.Interfaces;
@@ -19,12 +20,16 @@ namespace Infrastructure.Payments.Providers
         private readonly IUnitOfWork _uow;
         private readonly ILogger<PaymentOrchestrator> _logger;
         private readonly IEnrollmentAdminService? _enrollmentService;
+        private readonly IPushNotificationService _pushNotifications;
+        private readonly IPaymentRealtimeNotifier _realtimeNotifier;
 
         public PaymentOrchestrator(
             IHttpContextAccessor http,
             IPaymentGateway gateway,
             IUnitOfWork uow,
             ILogger<PaymentOrchestrator> logger,
+            IPushNotificationService pushNotifications,
+            IPaymentRealtimeNotifier realtimeNotifier,
             IEnrollmentAdminService? enrollmentService = null)
         {
             _http = http;
@@ -32,6 +37,8 @@ namespace Infrastructure.Payments.Providers
             _uow = uow;
             _logger = logger;
             _enrollmentService = enrollmentService;
+            _pushNotifications = pushNotifications;
+            _realtimeNotifier = realtimeNotifier;
         }
 
         public async Task<PaymentCheckoutDTO> CreateCheckoutAsync(CreatePaymentCommand command, CancellationToken ct = default)
@@ -143,6 +150,7 @@ namespace Infrastructure.Payments.Providers
                 {
                     _logger.LogWarning("VNPay callback failed for order {OrderId} with no pending payment. Ignored.", order.Id);
                 }
+                await _realtimeNotifier.NotifyPaymentFailedAsync(order.AccountId, order.Id, result.Message ?? "Payment failed", ct);
                 return result;
             }
 
@@ -190,6 +198,9 @@ namespace Infrastructure.Payments.Providers
                     _logger.LogError(ex, "Auto-enrollment failed for order {OrderId}", order.Id);
                 }
             }
+
+            await _realtimeNotifier.NotifyPaymentSuccessAsync(order.AccountId, order.Id, ct);
+            await _pushNotifications.SendPaymentSuccessAsync(order.AccountId, order.Id, ct);
 
             return result;
         }
