@@ -151,8 +151,7 @@ namespace Application.Services
         private async Task<OrderSummaryDTO> BuildOrderSummaryAsync(int orderId, int accountId)
         {
             var o = await _uow.OrderRepository.GetAllQueryable(
-                    $"{nameof(Order.OrderDetails)}," +
-                    $"{nameof(Order.OrderDetails)}.{nameof(OrderDetail.Order)}")
+                    $"{nameof(Order.OrderDetails)}")
                 .FirstAsync(x => x.Id == orderId && x.AccountId == accountId);
 
             // map titles by type
