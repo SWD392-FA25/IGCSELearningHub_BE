@@ -30,6 +30,8 @@ namespace Application.DTOs.Authentication
 
         public string? Address { get; set; }
 
+        public string Gender { get; set; } = string.Empty;
+
         [Required]
         public required string Role { get; set; }
 

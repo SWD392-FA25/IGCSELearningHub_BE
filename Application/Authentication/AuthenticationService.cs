@@ -99,12 +99,12 @@ namespace Application.Authentication
 
         public async Task<Result<AuthenticatedUserDTO>> LoginWithFirebaseAsync(FirebaseLoginRequestDTO dto)
         {
-            if (string.IsNullOrWhiteSpace(dto.IdToken))
+            if (string.IsNullOrWhiteSpace(dto.FirebaseIdToken))
                 return Result<AuthenticatedUserDTO>.Fail("Firebase id token is required.");
 
             try
             {
-                var externalUser = await _externalAuth.ValidateTokenAsync(dto.IdToken);
+                var externalUser = await _externalAuth.ValidateTokenAsync(dto.FirebaseIdToken);
 
                 if (string.IsNullOrWhiteSpace(externalUser.Email) || !externalUser.EmailVerified)
                     return Result<AuthenticatedUserDTO>.Fail("External account must include a verified email.");

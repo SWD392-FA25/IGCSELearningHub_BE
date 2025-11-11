@@ -17,5 +17,6 @@ namespace Application.DTOs.Authentication
         public string Role { get; set; }
         public string Status { get; set; }
         public bool IsExternal { get; set; }
+        public string Gender { get; set; } = string.Empty;
     }
 }

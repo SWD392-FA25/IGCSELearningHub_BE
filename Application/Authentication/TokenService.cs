@@ -35,7 +35,8 @@ namespace Application.Authentication
                 Email = account.Email,
                 Role = account.Role.ToString(),
                 Status = account.Status,
-                IsExternal = account.IsExternal
+                IsExternal = account.IsExternal,
+                Gender = account.Gender
             };
             return Result<AuthenticatedUserDTO>.Success(dto);
         }
@@ -68,7 +69,8 @@ namespace Application.Authentication
                 Email = account.Email,
                 Role = account.Role.ToString(),
                 Status = account.Status ?? string.Empty,
-                IsExternal = account.IsExternal
+                IsExternal = account.IsExternal,
+                Gender = account.Gender
             };
             return Result<AuthenticatedUserDTO>.Success(dto);
         }

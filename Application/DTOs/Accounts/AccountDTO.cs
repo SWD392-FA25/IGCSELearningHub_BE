@@ -13,6 +13,7 @@ namespace Application.DTOs.Accounts
         public string? FullName { get; set; }
         public string? Email { get; set; }
         public string? PhoneNumber { get; set; }
+        public string Gender { get; set; } = string.Empty;
         public string? Role { get; set; }
         public string? Status { get; set; }
         public bool IsExternal { get; set; }
