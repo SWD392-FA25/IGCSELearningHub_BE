@@ -22,6 +22,7 @@ namespace Infrastructure.Payments.Providers
         private readonly IEnrollmentAdminService? _enrollmentService;
         private readonly IPushNotificationService _pushNotifications;
         private readonly IPaymentRealtimeNotifier _realtimeNotifier;
+        private readonly IDeviceService _deviceService;
 
         public PaymentOrchestrator(
             IHttpContextAccessor http,
@@ -30,6 +31,7 @@ namespace Infrastructure.Payments.Providers
             ILogger<PaymentOrchestrator> logger,
             IPushNotificationService pushNotifications,
             IPaymentRealtimeNotifier realtimeNotifier,
+            IDeviceService deviceService,
             IEnrollmentAdminService? enrollmentService = null)
         {
             _http = http;
@@ -39,6 +41,7 @@ namespace Infrastructure.Payments.Providers
             _enrollmentService = enrollmentService;
             _pushNotifications = pushNotifications;
             _realtimeNotifier = realtimeNotifier;
+            _deviceService = deviceService;
         }
 
         public async Task<PaymentCheckoutDTO> CreateCheckoutAsync(CreatePaymentCommand command, CancellationToken ct = default)
@@ -200,7 +203,12 @@ namespace Infrastructure.Payments.Providers
             }
 
             await _realtimeNotifier.NotifyPaymentSuccessAsync(order.AccountId, order.Id, ct);
-            await _pushNotifications.SendPaymentSuccessAsync(order.AccountId, order.Id, ct);
+
+            var tokens = await _deviceService.GetActiveDeviceTokensAsync(order.AccountId, ct);
+            if (tokens.Count > 0)
+            {
+                await _pushNotifications.SendPaymentSuccessAsync(order.AccountId, order.Id, tokens, ct);
+            }
 
             return result;
         }
