@@ -18,6 +18,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System.IO;
 
 namespace Infrastructure
 {
@@ -49,11 +50,18 @@ namespace Infrastructure
                     var env = provider.GetRequiredService<IHostEnvironment>();
                     var firebaseSection = config.GetSection("Firebase");
                     var credentialsPath = firebaseSection.GetValue<string>("CredentialsPath")
-                                           ?? "Infrastructure/Firebase/igcse-learning-hub-firebase-adminsdk.json";
+                                           ?? "../Infrastructure/Firebase/igcse-learning-hub-firebase-adminsdk-fbsvc-a8bf658ded.json";
                     if (!Path.IsPathRooted(credentialsPath))
                     {
                         credentialsPath = Path.Combine(env.ContentRootPath, credentialsPath);
                     }
+
+                    if (!File.Exists(credentialsPath))
+                    {
+                        throw new FileNotFoundException(
+                            $"Firebase credential file not found at '{credentialsPath}'. Set 'Firebase:CredentialsPath' or 'FIREBASE_CREDENTIALS'.");
+                    }
+
                     credential = GoogleCredential.FromFile(credentialsPath);
                     logger.LogInformation("🔥 Firebase credentials loaded from local file: {Path}", credentialsPath);
                 }
