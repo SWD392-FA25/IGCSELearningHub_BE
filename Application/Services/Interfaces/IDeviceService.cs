@@ -11,5 +11,6 @@ namespace Application.Services.Interfaces
         Task<Result<DeviceDTO>> SyncAsync(int accountId, DeviceSyncRequest request, CancellationToken ct = default);
         Task<Result<bool>> UnregisterAsync(int accountId, DeviceUnregisterRequest request, CancellationToken ct = default);
         Task<Result<IEnumerable<DeviceDTO>>> GetMyDevicesAsync(int accountId);
+        Task<IReadOnlyList<string>> GetActiveDeviceTokensAsync(int accountId, CancellationToken ct = default);
     }
 }

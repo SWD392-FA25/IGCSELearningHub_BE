@@ -74,7 +74,7 @@ namespace Infrastructure
                 var app = provider.GetRequiredService<FirebaseApp>();
                 return FirebaseMessaging.GetMessaging(app);
             });
-            services.AddSingleton<IPushNotificationService, FirebasePushNotificationService>();
+            services.AddSingleton<IPushNotificationService, FirebaseNotificationPublisher>();
             services.AddSingleton<IPaymentRealtimeNotifier, NoOpPaymentRealtimeNotifier>();
             services.AddSingleton<IExternalAuthProvider, FirebaseExternalAuthProvider>();
             services.AddDbContext<AppDbContext>(opt => opt.UseSqlServer(config.GetConnectionString("IGCSELearningHub_DB")));

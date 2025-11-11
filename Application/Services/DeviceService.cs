@@ -6,8 +6,10 @@ using AutoMapper;
 using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using System.Collections.Generic;
 using System.Linq;
-using Microsoft.EntityFrameworkCore;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Application.Services
 {
@@ -84,6 +86,14 @@ namespace Application.Services
                 .ToListAsync();
             var mapped = devices.Select(d => _mapper.Map<DeviceDTO>(d));
             return Result<IEnumerable<DeviceDTO>>.Success(mapped, "Devices retrieved.");
+        }
+
+        public async Task<IReadOnlyList<string>> GetActiveDeviceTokensAsync(int accountId, CancellationToken ct = default)
+        {
+            return await _deviceRepository.GetAllQueryable()
+                .Where(d => d.AccountId == accountId && d.IsActive && !d.IsDeleted && !string.IsNullOrWhiteSpace(d.DeviceToken))
+                .Select(d => d.DeviceToken)
+                .ToListAsync(ct);
         }
     }
 }
