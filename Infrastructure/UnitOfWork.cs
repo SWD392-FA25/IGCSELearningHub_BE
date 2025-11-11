@@ -32,6 +32,7 @@ namespace Infrastructure
         public readonly IProgressRepository _progressRepository;
         public readonly ISubmissionRepository _submissionRepository;
         public readonly IRefreshTokenRepository _refreshTokenRepository;
+        public readonly IDeviceRepository _deviceRepository;
 
         public IAccountRepository AccountRepository => _accountRepository;
         public IAssignmentRepository AssignmentRepository => _assignmentRepository;
@@ -56,6 +57,7 @@ namespace Infrastructure
         public IProgressRepository ProgressRepository => _progressRepository;
         public ISubmissionRepository SubmissionRepository => _submissionRepository;
         public IRefreshTokenRepository RefreshTokenRepository => _refreshTokenRepository;
+        public IDeviceRepository DeviceRepository => _deviceRepository;
 
         public UnitOfWork(AppDbContext context,
             IAccountRepository accountRepository,
@@ -80,7 +82,8 @@ namespace Infrastructure
             IPaymentMethodRepository paymentMethodRepository,
             IProgressRepository progressRepository,
             ISubmissionRepository submissionRepository,
-            IRefreshTokenRepository refreshTokenRepository
+            IRefreshTokenRepository refreshTokenRepository,
+            IDeviceRepository deviceRepository
             )
         {
             _context = context;
@@ -107,6 +110,7 @@ namespace Infrastructure
             _progressRepository = progressRepository;
             _submissionRepository = submissionRepository;
             _refreshTokenRepository = refreshTokenRepository;
+            _deviceRepository = deviceRepository;
         }
         public async Task<int> SaveChangesAsync()
         {
