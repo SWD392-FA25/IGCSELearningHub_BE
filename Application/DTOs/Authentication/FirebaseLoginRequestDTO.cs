@@ -5,6 +5,6 @@ namespace Application.DTOs.Authentication
     public class FirebaseLoginRequestDTO
     {
         [Required]
-        public string IdToken { get; set; } = string.Empty;
+        public string FirebaseIdToken { get; set; } = string.Empty;
     }
 }

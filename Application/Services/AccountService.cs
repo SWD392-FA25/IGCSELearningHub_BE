@@ -105,6 +105,7 @@ namespace Application.Services
             account.PhoneNumber = updateDto.PhoneNumber;
             account.UserName = updateDto.UserName;
             account.Email = updateDto.Email;
+            account.Gender = updateDto.Gender;
 
             _unitOfWork.AccountRepository.Update(account);
             await _unitOfWork.SaveChangesAsync();
