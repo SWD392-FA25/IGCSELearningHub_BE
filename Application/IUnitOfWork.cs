@@ -33,6 +33,7 @@ namespace Application
         IProgressRepository ProgressRepository { get; }
         ISubmissionRepository SubmissionRepository { get; }
         IRefreshTokenRepository RefreshTokenRepository { get; }
+        IDeviceRepository DeviceRepository { get; }
         
 
         public Task<int> SaveChangesAsync();
