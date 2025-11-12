@@ -12,6 +12,7 @@ namespace Infrastructure.Data
             ConfigureAccounts(modelBuilder);
             ConfigureCourses(modelBuilder);
             ConfigureLivestreams(modelBuilder);
+            ConfigureQuestions(modelBuilder);
         }
 
         private static void ConfigurePaymentMethods(ModelBuilder modelBuilder)
