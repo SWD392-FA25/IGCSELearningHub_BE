@@ -49,8 +49,14 @@ namespace Infrastructure.Repository
 
         public void SoftDelete(TModel model)
         {
+            if (model == null)
+            {
+                return;
+            }
+
             model.IsDeleted = true;
             model.ModifiedAt = _clock.UtcNow;
+            _dbSet.Update(model);
         }
 
         public void Update(TModel model)
@@ -93,4 +99,3 @@ namespace Infrastructure.Repository
         }
     }
 }
-
