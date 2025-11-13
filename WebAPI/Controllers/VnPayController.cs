@@ -5,6 +5,10 @@ using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.WebUtilities;
+using System.Collections.Generic;
+using System.Linq;
+using Domain.Enums;
 
 namespace WebAPI.Controllers
 {
@@ -13,6 +17,8 @@ namespace WebAPI.Controllers
     [Route("api/v{version:apiVersion}/vnpay")]
     public class VnPayController : ControllerBase
     {
+        private const string WebSuccessRedirectUrl = "https://igcse-iota.vercel.app/my-learning";
+        private const string MobileSuccessRedirectUrl = "igcse-learning-hub://my-learning";
         private readonly IPaymentOrchestrator _orchestrator;
 
         public VnPayController(IPaymentOrchestrator orchestrator) => _orchestrator = orchestrator;
@@ -46,10 +52,38 @@ namespace WebAPI.Controllers
         {
             var result = await _orchestrator.HandleCallbackAsync(Request.Query, ct);
 
+            if (result.IsSuccess)
+            {
+                var baseUrl = result.Channel == PaymentChannel.MobileApp
+                    ? MobileSuccessRedirectUrl
+                    : WebSuccessRedirectUrl;
+                var redirectUrl = BuildSuccessRedirectUrl(result, baseUrl);
+                return Redirect(redirectUrl);
+            }
+
             // Trả theo wrapper chuẩn
             var res = Result<PaymentResultDTO>.Success(result, result.IsSuccess ? "Payment success" : "Payment failed", 200)
                 .AddDetail("provider", "VNPay");
             return StatusCode(res.StatusCode, res);
+        }
+
+        private static string BuildSuccessRedirectUrl(PaymentResultDTO result, string baseUrl)
+        {
+            var query = new Dictionary<string, string?>
+            {
+                ["status"] = "success",
+                ["orderId"] = result.OrderId > 0 ? result.OrderId.ToString() : string.Empty,
+                ["transactionRef"] = result.TransactionRef ?? string.Empty
+            };
+
+            // remove empty values
+            var filtered = query
+                .Where(kv => !string.IsNullOrWhiteSpace(kv.Value))
+                .ToDictionary(kv => kv.Key, kv => kv.Value);
+
+            return filtered.Count == 0
+                ? baseUrl
+                : QueryHelpers.AddQueryString(baseUrl, filtered);
         }
     }
 }

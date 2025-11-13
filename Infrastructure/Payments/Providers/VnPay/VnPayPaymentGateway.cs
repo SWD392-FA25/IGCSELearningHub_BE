@@ -23,11 +23,6 @@ namespace Infrastructure.Payments.Providers.VnPay
             _opt = opt.Value;
         }
 
-        public Task<PaymentCheckoutDTO> CreateCheckoutUrlAsync(CreatePaymentCommand command, CancellationToken ct = default)
-        {
-            throw new NotSupportedException("Use PaymentOrchestrator to generate the checkout URL with validated order amount.");
-        }
-
         internal Task<PaymentCheckoutDTO> CreateCheckoutUrlInternalAsync(
             int orderId, decimal amountVnd, string clientIp, string? bankCode, string? orderDesc, string orderTypeCode, CancellationToken ct)
         {
