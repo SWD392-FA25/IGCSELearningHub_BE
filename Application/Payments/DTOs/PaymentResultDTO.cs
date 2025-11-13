@@ -1,4 +1,5 @@
-﻿
+﻿using Domain.Enums;
+
 namespace Application.Payments.DTOs
 {
     public sealed class PaymentResultDTO
@@ -13,7 +14,8 @@ namespace Application.Payments.DTOs
         // mapping sang domain:
         public decimal Amount { get; set; } // VND
         public string Currency { get; set; } = "VND";
-        public Domain.Enums.PaymentStatus Status { get; set; }
+        public PaymentStatus Status { get; set; }
         public int OrderId { get; set; }
+        public PaymentChannel Channel { get; set; } = PaymentChannel.Web;
     }
 }

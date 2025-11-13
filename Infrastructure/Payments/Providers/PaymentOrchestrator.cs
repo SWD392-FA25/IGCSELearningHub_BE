@@ -10,6 +10,7 @@ using Infrastructure.Payments.Providers.VnPay;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 
 namespace Infrastructure.Payments.Providers
 {
@@ -75,7 +76,8 @@ namespace Infrastructure.Payments.Providers
                     OrderId = order.Id,
                     PaymentMethodId = method.Id,
                     Amount = amountVnd,
-                    Status = PaymentStatus.Pending
+                    Status = PaymentStatus.Pending,
+                    Channel = command.Channel
                 };
                 await _uow.PaymentRepository.AddAsync(payment);
                 await _uow.SaveChangesAsync();
@@ -122,6 +124,7 @@ namespace Infrastructure.Payments.Providers
                 result.IsSuccess = true;
                 result.Status = PaymentStatus.Paid;
                 result.Message = (result.Message ?? "").Length > 0 ? result.Message : "OrderIndex already paid. Callback ignored.";
+                result.Channel = await GetLatestPaymentChannelAsync(order.Id, ct);
                 return result;
             }
 
@@ -154,14 +157,16 @@ namespace Infrastructure.Payments.Providers
                     _logger.LogWarning("VNPay callback failed for order {OrderId} with no pending payment. Ignored.", order.Id);
                 }
                 await _realtimeNotifier.NotifyPaymentFailedAsync(order.AccountId, order.Id, result.Message ?? "Payment failed", ct);
+                result.Channel = pendingPayment?.Channel ?? result.Channel;
                 return result;
             }
+
+            var payment = pendingPayment;
 
             await using var transaction = await _uow.BeginTransactionAsync();
             try
             {
                 // Success path
-                var payment = pendingPayment;
                 if (payment is null)
                 {
                     var method = await EnsureVnPayMethodAsync(ct);
@@ -170,7 +175,8 @@ namespace Infrastructure.Payments.Providers
                         OrderId = order.Id,
                         PaymentMethodId = method.Id,
                         Amount = result.Amount,
-                        Status = PaymentStatus.Pending
+                        Status = PaymentStatus.Pending,
+                        Channel = PaymentChannel.Web
                     };
                     await _uow.PaymentRepository.AddAsync(payment);
                 }
@@ -210,7 +216,20 @@ namespace Infrastructure.Payments.Providers
                 await _pushNotifications.SendPaymentSuccessAsync(order.AccountId, order.Id, tokens, ct);
             }
 
+            result.Channel = payment?.Channel ?? PaymentChannel.Web;
             return result;
+        }
+
+        private async Task<PaymentChannel> GetLatestPaymentChannelAsync(int orderId, CancellationToken ct)
+        {
+            var channel = await _uow.PaymentRepository
+                .GetAllQueryable()
+                .Where(p => p.OrderId == orderId && !p.IsDeleted)
+                .OrderByDescending(p => p.ModifiedAt)
+                .Select(p => p.Channel)
+                .FirstOrDefaultAsync(ct);
+
+            return channel;
         }
 
         private async Task<PaymentMethod> EnsureVnPayMethodAsync(CancellationToken ct)

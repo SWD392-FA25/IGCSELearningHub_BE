@@ -116,6 +116,7 @@ namespace Application.Payments.Services
                     PaymentMethodId = cashMethod.Id,
                     Amount = amount,
                     Status = PaymentStatus.Paid,
+                    Channel = PaymentChannel.Web,
                     PaidDate = _clock.UtcNow
                 };
                 await _uow.PaymentRepository.AddAsync(cashPayment);

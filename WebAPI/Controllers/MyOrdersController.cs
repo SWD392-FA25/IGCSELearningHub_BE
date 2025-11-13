@@ -8,6 +8,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Security.Claims;
+using Domain.Enums;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace WebAPI.Controllers
 {
@@ -64,7 +66,7 @@ namespace WebAPI.Controllers
 
         // POST /me/orders/{orderId}/checkout  (tạo VNPay URL nhanh)
         [HttpPost("{orderId:int}/checkout")]
-        public async Task<IActionResult> Checkout([FromRoute] int orderId)
+        public async Task<IActionResult> Checkout([FromRoute] int orderId, [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] CheckoutRequestDTO? request = null)
         {
             var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
             var checkout = await _pay.CreateCheckoutAsync(new CreatePaymentCommand
@@ -72,7 +74,8 @@ namespace WebAPI.Controllers
                 OrderId = orderId,
                 ClientIp = ip,
                 OrderDescription = $"Thanh toan don hang #{orderId}",
-                OrderTypeCode = "other"
+                OrderTypeCode = "other",
+                Channel = request?.Channel ?? PaymentChannel.Web
             });
 
             var res = Result<PaymentCheckoutDTO>.Success(checkout, "Checkout URL generated.");
@@ -82,7 +85,7 @@ namespace WebAPI.Controllers
         //   Retry tạo URL thanh toán(khi đơn vẫn chưa Paid)
         // POST /me/orders/{orderId}/retry-checkout
         [HttpPost("{orderId:int}/retry-checkout")]
-        public async Task<IActionResult> RetryCheckout([FromRoute] int orderId)
+        public async Task<IActionResult> RetryCheckout([FromRoute] int orderId, [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] CheckoutRequestDTO? request = null)
         {
             // Kiểm tra nhanh: chỉ cho retry nếu order của user và chưa Paid
             var status = await _orderQuery.GetOrderStatusAsync(CurrentUserId, orderId);
@@ -98,7 +101,8 @@ namespace WebAPI.Controllers
                 OrderId = orderId,
                 ClientIp = ip,
                 OrderDescription = $"Thanh toan don hang #{orderId}",
-                OrderTypeCode = "other"
+                OrderTypeCode = "other",
+                Channel = request?.Channel ?? PaymentChannel.Web
             });
 
             return StatusCode(200, Result<PaymentCheckoutDTO>.Success(checkout, "New checkout URL generated"));

@@ -4,6 +4,7 @@ using Application.DTOs.Devices;
 using Application.DTOs.Quiz;
 using AutoMapper;
 using Domain.Entities;
+using System;
 using System.Linq;
 
 namespace Application.Mapping
@@ -22,6 +23,7 @@ namespace Application.Mapping
             CreateMap<AccountRegistrationDTO, Account>()
                 .ForMember(dest => dest.Password, opt => opt.Ignore())
                 .ForMember(dest => dest.Status, opt => opt.MapFrom(_ => "Active"))
+                .ForMember(dest => dest.Gender, opt => opt.MapFrom(src => string.IsNullOrWhiteSpace(src.Gender) ? "Other" : src.Gender))
                 .ForMember(dest => dest.ExternalProvider, opt => opt.Condition(src => src.IsExternal));
 
             CreateMap<Account, AccountDTO>();

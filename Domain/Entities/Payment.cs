@@ -13,6 +13,8 @@ public partial class Payment : BaseFullEntity
 
     public PaymentStatus Status { get; set; } = PaymentStatus.Pending;
 
+    public PaymentChannel Channel { get; set; } = PaymentChannel.Web;
+
     public DateTime? PaidDate { get; set; }
 
     public virtual Order Order { get; set; } = null!;
