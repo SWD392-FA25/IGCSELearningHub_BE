@@ -1,4 +1,4 @@
-name: Build & Deploy .NET 8 to Azure Web App (Linux)
+name: Build & Deploy .NET 8 Service
 
 on:
   push:
@@ -6,17 +6,24 @@ on:
         - master
   workflow_dispatch:
 
+permissions:
+  contents: read
+  packages: write
+
 env:
-  AZURE_WEBAPP_NAME: igcse-learninghub-api  
   DOTNET_VERSION: "8.0.x"
-  SOLUTION_PATH: IGCSE Learning Hub.sln
+  SOLUTION_PATH: IGCSELearningHub.sln
   PROJECT_PATH: WebAPI/WebAPI.csproj
-  PUBLISH_DIR: ./publish
+  DOCKERFILE_PATH: WebAPI/Dockerfile
+  REGISTRY: ghcr.io
+  IMAGE_TAG: ${{ github.sha }}
 
 jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    outputs:
+      image: ${{ steps.docker_build.outputs.image }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -34,39 +41,59 @@ jobs:
           restore-keys: ${{ runner.os }}-nuget-
 
       - name: Restore
-        run: dotnet restore ${{ env.PROJECT_PATH }}
+        run: dotnet restore ${{ env.SOLUTION_PATH }}
   
       - name: Build (Release)
-        run: dotnet build ${{ env.PROJECT_PATH }} -c Release --no-restore
+        run: dotnet build ${{ env.SOLUTION_PATH }} -c Release --no-restore
   
       - name: Test
-        run: dotnet test -c Release --no-build --verbosity normal || true
+        run: dotnet test ${{ env.SOLUTION_PATH }} -c Release --no-build --verbosity normal || true
   
-      - name: Publish
-        run: dotnet publish ${{ env.PROJECT_PATH }} -c Release -o ${{ env.PUBLISH_DIR }} --no-build
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+      - name: Log in to container registry
+        uses: docker/login-action@v3
         with:
-          name: webapi-publish
-          path: ${{ env.PUBLISH_DIR }}
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Docker image
+        id: docker_build
+        run: |
+          IMAGE_REPO="${{ env.REGISTRY }}/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')"
+          IMAGE_TAG="${{ env.IMAGE_TAG }}"
+          FULL_IMAGE="$IMAGE_REPO:$IMAGE_TAG"
+          docker build -f "${{ env.DOCKERFILE_PATH }}" -t "$FULL_IMAGE" .
+          echo "image=$FULL_IMAGE" >> "$GITHUB_OUTPUT"
+
+      - name: Push Docker image
+        run: docker push ${{ steps.docker_build.outputs.image }}
 
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        target:
+          - name: production
+            service_id_secret: RENDER_SERVICE_ID_PRODUCTION
+            url: https://igcse-learninghub-api.onrender.com
     environment:
-      name: production
-      url: https://${{ env.AZURE_WEBAPP_NAME }}.azurewebsites.net
+      name: ${{ matrix.target.name }}
+      url: ${{ matrix.target.url }}
 
     steps:
-      - uses: actions/download-artifact@v4
-        with:
-          name: webapi-publish
-          path: ${{ env.PUBLISH_DIR }}
-
-      - name: Deploy to Azure Web App (Linux)
-        uses: azure/webapps-deploy@v3
-        with:
-          app-name: ${{ env.AZURE_WEBAPP_NAME }}
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          package: ${{ env.PUBLISH_DIR }}
+      - name: Trigger Render deploy
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          RENDER_SERVICE_ID: ${{ secrets[matrix.target.service_id_secret] }}
+          IMAGE: ${{ needs.build.outputs.image }}
+        run: |
+          if [ -z "$RENDER_API_KEY" ] || [ -z "$RENDER_SERVICE_ID" ]; then
+            echo "Render credentials are not fully configured" >&2
+            exit 1
+          fi
+          curl -fsS -X POST \
+            -H "Authorization: Bearer $RENDER_API_KEY" \
+            -H "Content-Type: application/json" \
+            "https://api.render.com/v1/services/$RENDER_SERVICE_ID/deploys" \
+            -d "{\"image\":\"$IMAGE\"}"
