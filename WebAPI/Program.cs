@@ -28,11 +28,7 @@ namespace WebAPI
                 Log.Information("Starting up the application...");
 
                 var builder = WebApplication.CreateBuilder(args);
-                if (!builder.Environment.IsDevelopment())
-                {
-                    builder.WebHost.ConfigureKestrelWithEnvPort();
-                }
-
+                //builder.WebHost.ConfigureKestrelWithEnvPort();
 
                 builder.Host.UseSerilog((ctx, services, config) =>
                 config.ReadFrom.Configuration(ctx.Configuration)
