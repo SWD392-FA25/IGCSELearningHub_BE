@@ -1,8 +1,6 @@
 using Application;
 using Asp.Versioning;
 using Asp.Versioning.ApiExplorer;
-using FirebaseAdmin;
-using Google.Apis.Auth.OAuth2;
 using Infrastructure;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -30,6 +28,11 @@ namespace WebAPI
                 Log.Information("Starting up the application...");
 
                 var builder = WebApplication.CreateBuilder(args);
+                if (!builder.Environment.IsDevelopment())
+                {
+                    builder.WebHost.ConfigureKestrelWithEnvPort();
+                }
+
 
                 builder.Host.UseSerilog((ctx, services, config) =>
                 config.ReadFrom.Configuration(ctx.Configuration)
